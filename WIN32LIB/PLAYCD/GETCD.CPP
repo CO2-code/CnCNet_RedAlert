@@ -80,7 +80,8 @@ GetCDClass::GetCDClass(VOID)
 
 	for (char i='a' ; i<='z' ; i++){
 		path[0]=i;
-		if (GetDriveType (path) == DRIVE_CDROM){
+		// In source no-CD mode, use fixed disks as the local installation drives.
+		if (GetDriveType (path) == DRIVE_FIXED){
 			CDDrives[CDCount++] = (int) (i-'a');
 		}
 	}
