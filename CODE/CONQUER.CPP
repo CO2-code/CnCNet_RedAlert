@@ -4338,7 +4338,7 @@ typedef enum {
 #error DVD must be defined!
 #endif
 
-bool Force_CD_Available( int cd_desired )				//	ajw
+bool Force_CD_Available( int )				//	ajw
 {
 	// Source no-CD mode: do not require a physical disc.
 	return true;
@@ -4652,7 +4652,7 @@ bool Force_CD_Available( int cd_desired )				//	ajw
 
 #else		//	FIXIT_VERSION_3 not defined
 
-bool Force_CD_Available(int cd)
+bool Force_CD_Available(int)
 {
 	// Source no-CD mode: do not require a physical disc.
 	return true;
