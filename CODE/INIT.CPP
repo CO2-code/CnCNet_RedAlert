@@ -2854,7 +2854,17 @@ static void Init_CDROM_Access(void)
 #endif
 
 	/*
-	**	Always try to look at the CD-ROM for data files.
+	**	If no search paths were configured, first treat the current directory
+	**	as a local installation path instead of assuming the game is running
+	**	from a CD-ROM.
+	*/
+	if (!CCFileClass::Is_There_Search_Drives()) {
+		char local_search_path[] = ".";
+		CCFileClass::Set_Search_Drives(local_search_path);
+	}
+
+	/*
+	**	If no local search path could be configured, use the CD-ROM fallback.
 	*/
 	if (!CCFileClass::Is_There_Search_Drives()) {
 
