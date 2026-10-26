@@ -4338,10 +4338,316 @@ typedef enum {
 #error DVD must be defined!
 #endif
 
-bool Force_CD_Available( int cd_desired )
+bool Force_CD_Available( int cd_desired )				//	ajw
 {
 	// Source no-CD mode: do not require a physical disc.
 	return true;
+#if 0
+
+	static int _last = -1;
+	static void *font;
+#ifdef FRENCH
+	static char * _cd_name[] = {
+		"ALERTE ROUGE CD1",
+		"ALERTE ROUGE CD2",
+		"CD Missions Taiga",
+		"CD Missions M.A.D.",
+		"ALERTE ROUGE DVD",
+};
+#endif
+#ifdef GERMAN
+	static char * _cd_name[] = {
+		"ALARMSTUFE ROT CD1",
+		"ALARMSTUFE ROT CD2",
+		"CD Gegenangriff einlegen",
+		"CD TRANS einlegen",
+		"ALARMSTUFE ROT DVD",
+	};
+#endif
+#ifdef ENGLISH
+	static char * _cd_name[] = {
+		"RED ALERT DISK 1",
+		"RED ALERT DISK 2",
+		"CounterStrike CD",
+		"Aftermath CD",
+		"RED ALERT DVD",
+	};
+#endif
+
+	int new_cd_drive = 0;
+	int cd_current;
+	int current_drive;
+
+	ThemeType theme_playing = THEME_NONE;
+
+	/*
+	** If the required CD is set to -2 then it means that the file is present
+	** on the local hard drive and we shouldn't have to worry about it.
+	*/
+	if (cd_desired == CD_LOCAL) return(true);
+
+	/*
+	** Find out if the CD in the current drive is the one we are looking for
+ 	*/
+	current_drive = CCFileClass::Get_CD_Drive();
+	cd_current = Get_CD_Index(current_drive, 1*60);
+
+//	debugprint("Get_CD_Index just returned %d\n", cd_current);
+//	debugprint("We are checking for %d\n", cd_desired);
+//	debugprint("current_drive = %d\n", current_drive);
+
+	if( Using_DVD() )
+	{
+		//	All requested cd indexes get rerouted to the DVD.
+		cd_desired = CD_DVD;
+//		if( RequiredCD != -1 )
+//			RequiredCD = CD_DVD;		//	Just seems like a good idea. Not sure if necessary.	ajw
+	}
+
+	if (cd_current >= 0 )
+	{
+		if( cd_desired == CD_CS_OR_AM )
+		{
+			// If the current cd is CS or AM then change request to whatever
+			// is present.
+			if( cd_current == CD_COUNTERSTRIKE || cd_current == CD_AFTERMATH )
+				cd_desired = cd_current;
+		}
+		// If the current CD is requested or any CD will work
+		if( cd_desired == cd_current || cd_desired == CD_ANY )
+		{
+			/*
+			** The required CD is still in the CD drive we used last time
+			*/
+			new_cd_drive = current_drive;
+		}
+	}
+
+	/*
+	** Flag that we will have to restart the theme
+	*/
+	theme_playing = Theme.What_Is_Playing();
+	Theme.Stop();
+
+	// Check the last drive
+	if (!new_cd_drive)
+	{
+		/*
+		** Check the last CD drive we used if it's different from the current one
+		*/
+		int last_drive = CCFileClass::Get_Last_CD_Drive();
+
+		/*
+		** Make sure the last drive is valid and it isn't the current drive
+		*/
+		if (last_drive && last_drive != CCFileClass::Get_CD_Drive())		//	Else we have already checked this cd.
+		{
+			/*
+			** Find out if there is a C&C cd in the last drive and if so is it the one we are looking for
+			** Give it a nice big timeout so the CD changer has time to swap the discs
+			*/
+			cd_current = Get_CD_Index(last_drive, 10*60);
+
+			if (cd_current >= 0 )
+			{
+				if( cd_desired == CD_CS_OR_AM )
+				{
+					// If the cd is CS or AM then change request to whatever
+					// is present.
+					if( cd_current == CD_COUNTERSTRIKE || cd_current == CD_AFTERMATH )
+						cd_desired = cd_current;
+				}
+				// If the cd is present or any cd will work
+				if( cd_desired == cd_current || cd_desired == CD_ANY )
+				{
+					/*
+					** The required CD is in the CD drive we used last time
+					*/
+					new_cd_drive = last_drive;
+				}
+			}
+		}
+	}
+
+	/*
+	** Lordy.  No sign of that blimming CD anywhere. Search all the CD drives
+	** then if we still can't find it prompt the user to insert it.
+	*/
+	if (!new_cd_drive)
+	{
+		/*
+		** Small timeout for the first pass through the drives
+		*/
+		int drive_search_timeout = 2*60;
+
+		for (;;)
+		{
+			char buffer[128];
+			/*
+			** Search all present CD drives for the required disc.
+			*/
+			for (int i = 0 ; i < CDList.Get_Number_Of_Drives(); i++)
+			{
+				int cd_drive = CDList.Get_Next_CD_Drive();
+				cd_current = Get_CD_Index(cd_drive, drive_search_timeout);
+
+				if (cd_current >= 0)
+				{
+					/*
+					** We found a C&C cd - lets see if it was the one we were looking for
+					*/
+					// Require CS or AM
+					if( cd_desired == CD_CS_OR_AM )
+					{
+						// If the cd is CS or AM then change request to whatever
+						// is present.
+						if( cd_current == CD_COUNTERSTRIKE || cd_current == CD_AFTERMATH )
+							cd_desired = cd_current;
+					}
+					
+					if( cd_desired == cd_current || cd_desired == CD_ANY )
+					{
+						/*
+						** Woohoo! The disk was in a different cd drive. Refresh the search path list
+				 		* and return.
+						*/
+						new_cd_drive = cd_drive;
+						break;
+					}
+				}
+			}
+
+			/*
+			** A new disc has become available so break
+			*/
+			if (new_cd_drive) break;
+
+			/*
+			** Increase the timeout for subsequent drive searches.
+			*/
+			drive_search_timeout = 5*60;
+
+			/*
+			**	Prompt to insert the CD into the drive.
+			*/
+			//V.Grippi
+			if( cd_desired == CD_CS_OR_AM )
+				cd_desired = CD_AFTERMATH;
+			
+			if( cd_desired == CD_DVD )
+			{
+				#ifdef FRENCH
+			   	sprintf(buffer, "Insrez le %s",  _cd_name[4]);
+				#else
+				#ifdef GERMAN
+				sprintf(buffer, "Bitte %s",  _cd_name[4]);
+				#else
+				sprintf(buffer, "Please insert the %s",  _cd_name[4]);
+				#endif
+				#endif
+			}
+			else if( cd_desired == CD_COUNTERSTRIKE || cd_desired == CD_AFTERMATH )
+			{
+				#ifdef FRENCH
+			   	sprintf(buffer, "Insrez le %s",  _cd_name[cd_desired]);
+				#else
+				#ifdef GERMAN
+				sprintf(buffer, "Bitte %s",  _cd_name[cd_desired]);
+				#else
+				sprintf(buffer, "Please insert the %s",  _cd_name[cd_desired]);
+				#endif
+				#endif
+			}
+			else if( cd_desired == CD_ANY )
+			{
+				sprintf(buffer, Text_String(TXT_CD_DIALOG_1), cd_desired+1, _cd_name[cd_desired]);
+			}
+			else		//	0 or 1
+			{
+				sprintf(buffer, Text_String(TXT_CD_DIALOG_2), cd_desired+1, _cd_name[cd_desired]);
+			}
+
+			GraphicViewPortClass * oldpage = Set_Logic_Page(SeenBuff);
+			theme_playing = Theme.What_Is_Playing();
+			Theme.Stop();
+			int hidden = Get_Mouse_State();
+			font = (void *)FontPtr;
+
+			/*
+			**	Only set the palette if necessary.
+			*/
+			if (PaletteClass::CurrentPalette[1].Red_Component() +
+					PaletteClass::CurrentPalette[1].Blue_Component() +
+					PaletteClass::CurrentPalette[1].Green_Component() == 0)
+			{
+				GamePalette.Set();
+			}
+
+			Keyboard->Clear();
+
+			while (Get_Mouse_State()) Show_Mouse();
+
+			if (WWMessageBox().Process(buffer, TXT_OK, TXT_CANCEL, TXT_NONE, TRUE) == 1)
+			{
+				Set_Logic_Page(oldpage);
+#ifdef FIXIT_VERSION_3
+				while (hidden--) Hide_Mouse();
+#else
+				Hide_Mouse();
+#endif
+				return(false);
+			}
+
+			while (hidden--) Hide_Mouse();
+			Set_Font(font);
+			Set_Logic_Page(oldpage);
+		}
+	}
+
+	CurrentCD = cd_current;
+
+	CCFileClass::Set_CD_Drive(new_cd_drive);
+	CCFileClass::Refresh_Search_Drives();
+
+	/*
+	**	If it broke out of the query for CD-ROM loop, then this means that the
+	**	CD-ROM has been inserted.
+	*/
+	if (cd_desired == 4) cd_desired--;
+
+	//	ajw - Added condition of cd_desired != 5 to the following if.
+	//	Reason: This was triggering before Init_Secondary_Mixfiles(), which was screwing up the mixfile system somehow.
+	//
+	//	Since the DVD is the only disk that can possibly be required when Using_DVD(), I never have to reload the mix
+	//	files here, because no other disk could ever have been asked for. And if not Using_DVD(), cd_desired will never
+	//	be equal to 5. So this is safe.
+	if (cd_desired > -1 && _last != cd_desired && cd_desired != 5)
+	{
+		_last = cd_desired;
+
+		Theme.Stop();
+
+//		if (ConquerMix) delete ConquerMix;
+		if (MoviesMix) delete MoviesMix;
+		if (GeneralMix) delete GeneralMix;
+		if (ScoreMix) delete ScoreMix;
+		if (MainMix) delete MainMix;
+
+		MainMix = new MFCD("MAIN.MIX", &FastKey);
+		assert(MainMix != NULL);
+//		ConquerMix = new MFCD("CONQUER.MIX", &FastKey);
+		if (CCFileClass("MOVIES1.MIX").Is_Available())
+			MoviesMix = new MFCD("MOVIES1.MIX", &FastKey);
+		else
+			MoviesMix = new MFCD("MOVIES2.MIX", &FastKey);
+		assert(MoviesMix != NULL);
+		GeneralMix = new MFCD("GENERAL.MIX", &FastKey);
+		ScoreMix = new MFCD("SCORES.MIX", &FastKey);
+		ThemeClass::Scan();
+	}
+
+	return(true);
+#endif
 }
 
 #else		//	FIXIT_VERSION_3 not defined
@@ -4350,7 +4656,410 @@ bool Force_CD_Available(int cd)
 {
 	// Source no-CD mode: do not require a physical disc.
 	return true;
-}
+#if 0
+
+	static int _last = -1;
+//	static char _palette[768];
+//	static char _hold[256];
+	static void *font;
+#ifdef FRENCH
+	static char * _cd_name[] = {
+		"ALERTE ROUGE CD1",
+		"ALERTE ROUGE CD2",
+		"CD Missions Taiga",
+		"CD Missions M.A.D.",
+
+		// Denzil 4/15/98
+		#ifdef DVD
+		"ALERTE ROUGE DVD",
+		#endif
+};
+
+#endif
+#ifdef GERMAN
+	static char * _cd_name[] = {
+		"ALARMSTUFE ROT CD1 einlegen",
+		"ALARMSTUFE ROT CD2 einlegen",
+		"CD Gegenangriff einlegen",
+		"CD TRANS einlegen",
+
+		// Denzil 4/15/98
+		#ifdef DVD
+		"ALARMSTUFE ROT DVD einlegen",
+		#endif
+	};
+#endif
+#ifdef ENGLISH
+	static char * _cd_name[] = {
+		"RED ALERT DISK 1",
+		"RED ALERT DISK 2",
+		"CounterStrike CD",
+		"Aftermath CD",
+
+		// Denzil 4/15/98
+		#ifdef DVD
+		"RED ALERT DVD",
+		#endif
+	};
+#endif
+
+	int new_cd_drive = 0;
+	int cd_index;
+	char buffer[128];
+	int cd_drive;
+	int current_drive;
+	int drive_search_timeout;
+
+	ThemeType theme_playing = THEME_NONE;
+
+//#ifdef FIXIT_ANTS
+//	if(Scen.ScenarioName[2] == 'A')
+//	   cd = 2;
+//#endif
+	/*
+	** If the required CD is set to -2 then it means that the file is present
+	** on the local hard drive and we shouldn't have to worry about it.
+	*/
+	if (cd == CD_LOCAL) return(true);
+
+	/*
+	** Find out if the CD in the current drive is the one we are looking for
+ 	*/
+	current_drive = CCFileClass::Get_CD_Drive();
+	cd_index = Get_CD_Index(current_drive, 1*60);
+
+	#ifdef CHEAT_KEYS
+	//	Mono_Printf("Get_CD_Index just returned %d\n", cd_index);
+	//	Mono_Printf("We are checking for %d\n", cd);
+	//	Mono_Printf("current_drive = %d\n", current_drive);
+	#endif	//CHEAT_KEYS
+
+	#ifdef DVD // Denzil
+	// CD1 and CD2 are ignored, force the DVD
+	if (cd_index == 0 || cd_index == 1)
+		cd_index = -1;
+	#endif
+	
+	if (cd_index >= 0 )
+		{
+		#ifdef FIXIT_CSII	//	checked - ajw 9/28/98
+		// Require CS or AM
+		if (cd == CD_CS_OR_AM)
+			{
+			// If the current cd is CS or AM then change request to whatever
+			// is present.
+			if (cd_index == 2 || cd_index == 3)
+				{
+				cd = cd_index;
+				}
+			}
+		#endif
+
+		#ifdef DVD // Denzil
+		// If the current drive is the DVD then requests for CD1 and CD2 are okay
+		if (cd_index == 4)
+			{
+			// CD1, CD2 & DVD requests
+			if (cd == 0 || cd == 1 || cd == 5)
+				{
+				cd_index = cd;
+				}
+			}
+		#endif
+		
+		// If the current CD is requested or any CD will work
+		if (cd == cd_index || cd == -1 )
+			{
+			/*
+			** The required CD is still in the CD drive we used last time
+			*/
+			new_cd_drive = current_drive;
+			}
+		}
+
+	/*
+	** Flag that we will have to restart the theme
+	*/
+	theme_playing = Theme.What_Is_Playing();
+	Theme.Stop();
+
+	// Check the last drive
+	if (!new_cd_drive)
+		{
+		/*
+		** Check the last CD drive we used if it's different from the current one
+		*/
+		int last_drive = CCFileClass::Get_Last_CD_Drive();
+
+		/*
+		** Make sure the last drive is valid and it isn't the current drive
+		*/
+		if (last_drive && last_drive != CCFileClass::Get_CD_Drive())
+			{
+			/*
+			** Find out if there is a C&C cd in the last drive and if so is it the one we are looking for
+			** Give it a nice big timeout so the CD changer has time to swap the discs
+			*/
+			cd_index = Get_CD_Index(last_drive, 10*60);
+
+			#ifdef DVD // Denzil
+			// Ignore CD1 and CD2 disks, force DVD
+			if (cd_index == 0 || cd_index == 1)
+				cd_index = -1;
+			#endif
+			
+			if (cd_index >= 0 )
+				{
+				#ifdef FIXIT_CSII	//	checked - ajw 9/28/98
+				// Require CS or AM
+				if (cd == 4)
+					{
+					// If CS or AM was the last drive then use it
+					if (cd_index == 2 || cd_index == 3)
+						{
+						cd = cd_index;
+						}
+					}
+				#endif
+
+				#ifdef DVD // Denzil
+				// If DVD is in drive
+				if (cd_index == 4)
+					{
+					// CD1, CD2 and DVD requests are all on the DVD 
+					if ((cd == 0) || (cd == 1) || (cd == 5))
+						{
+						cd_index = cd;
+						}
+					}
+				#endif
+
+				// If the cd is present or any cd will work
+				if (cd == cd_index || cd == -1 )
+					{
+					/*
+					** The required CD is in the CD drive we used last time
+					*/
+					new_cd_drive = last_drive;
+					}
+				}
+			}
+		}
+
+	/*
+	** Lordy.  No sign of that blimming CD anywhere. Search all the CD drives
+	** then if we still can't find it prompt the user to insert it.
+	*/
+	if (!new_cd_drive)
+		{
+		/*
+		** Small timeout for the first pass through the drives
+		*/
+		drive_search_timeout = 2*60;
+
+		for (;;)
+			{
+			/*
+			** Search all present CD drives for the required disc.
+			*/
+			for (int i = 0 ; i < CDList.Get_Number_Of_Drives(); i++)
+				{
+				cd_drive = CDList.Get_Next_CD_Drive();
+				cd_index = Get_CD_Index(cd_drive, drive_search_timeout);
+
+				#ifdef DVD // Denzil
+				// Ignore CD1 and CD2, force the DVD
+				if (cd_index == 0 || cd_index == 1)
+					cd_index = -1;
+				#endif
+				
+				if (cd_index >= 0)
+					{
+					/*
+					** We found a C&C cd - lets see if it was the one we were looking for
+					*/
+					#ifdef FIXIT_CSII	//	checked - ajw 9/28/98
+					// Require CS or AM
+					if (cd == 4)
+						{
+						// If the disk is CS or AM then request it
+						if (cd_index == 2 || cd_index == 3)
+							{
+							cd = cd_index;
+							}
+						}
+					#endif
+
+					#ifdef DVD // Denzil
+					if (cd_index == 4)
+						{
+						if ((cd == 0) || (cd == 1) || (cd == 5))
+							{
+							cd_index = cd;
+							}
+						}
+					#endif
+					
+					if (cd == cd_index || cd == -1 || cd == -2 )
+						{
+						/*
+						** Woohoo! The disk was in a different cd drive. Refresh the search path list
+				 		* and return.
+						*/
+						new_cd_drive = cd_drive;
+						break;
+						}
+					}
+				}
+
+			/*
+			** A new disc has become available so break
+			*/
+			if (new_cd_drive) break;
+
+			/*
+			** Increase the timeout for subsequent drive searches.
+			*/
+			drive_search_timeout = 5*60;
+
+			/*
+			**	Prompt to insert the CD into the drive.
+			*/
+			//V.Grippi
+			#ifdef FIXIT_CSII	//	checked - ajw 9/28/98
+			if(cd == 4) cd--;
+			
+			// CS or AM
+			if(cd == 2 || cd == 3)
+				{
+			#else
+			if(cd == 2)
+		   		{
+			#endif
+
+				#ifdef FRENCH
+			   	sprintf(buffer, "Insrez le %s",  _cd_name[cd]);
+				#else
+				#ifdef GERMAN
+				sprintf(buffer, "Bitte %s",  _cd_name[cd]);
+				#else
+				sprintf(buffer, "Please insert the %s",  _cd_name[cd]);
+				#endif
+				#endif
+				}
+			else
+				{
+				#ifdef DVD
+				#ifdef FRENCH
+			   	sprintf(buffer, "Insrez le %s", _cd_name[4]);
+				#else
+				#ifdef GERMAN 
+				sprintf(buffer, "Bitte %s", _cd_name[4]);
+				#else
+				sprintf(buffer, "Please insert the %s", _cd_name[4]);
+				#endif
+				#endif
+				#else
+				if (cd == -1 )
+					{
+					sprintf(buffer, Text_String(TXT_CD_DIALOG_1), cd+1, _cd_name[cd]);
+					}
+				else
+					{
+					sprintf(buffer, Text_String(TXT_CD_DIALOG_2), cd+1, _cd_name[cd]);
+					}
+				#endif
+				}
+
+			#ifdef WIN32
+			GraphicViewPortClass * oldpage = Set_Logic_Page(SeenBuff);
+			#else
+			GraphicBufferClass * oldpage = Set_Logic_Page(SeenBuff);
+			#endif
+			theme_playing = Theme.What_Is_Playing();
+			Theme.Stop();
+			int hidden = Get_Mouse_State();
+			font = (void *)FontPtr;
+
+			/*
+			**	Only set the palette if necessary.
+			*/
+			if (PaletteClass::CurrentPalette[1].Red_Component() +
+					PaletteClass::CurrentPalette[1].Blue_Component() +
+					PaletteClass::CurrentPalette[1].Green_Component() == 0)
+				{
+				GamePalette.Set();
+				}
+
+			Keyboard->Clear();
+
+			while (Get_Mouse_State()) Show_Mouse();
+
+			if (WWMessageBox().Process(buffer, TXT_OK, TXT_CANCEL, TXT_NONE, TRUE) == 1)
+				{
+				Set_Logic_Page(oldpage);
+				Hide_Mouse();
+				return(false);
+				}
+
+			while (hidden--) Hide_Mouse();
+			Set_Font(font);
+			Set_Logic_Page(oldpage);
+			}
+		}
+
+	CurrentCD = cd_index;
+
+	CCFileClass::Set_CD_Drive(new_cd_drive);
+	CCFileClass::Refresh_Search_Drives();
+
+	/*
+	**	If it broke out of the query for CD-ROM loop, then this means that the
+	**	CD-ROM has been inserted.
+	*/
+	#ifdef FIXIT_CSII	//	checked - ajw 9/28/98
+	if (cd == 4) cd--;
+	#endif
+//	if (cd > -3 && _last != cd) {
+	if (cd > -1 && _last != cd)
+		{
+		_last = cd;
+
+		Theme.Stop();
+
+//		if (ConquerMix) delete ConquerMix;
+		if (MoviesMix) delete MoviesMix;
+		if (GeneralMix) delete GeneralMix;
+		if (ScoreMix) delete ScoreMix;
+		if (MainMix) delete MainMix;
+
+		MainMix = new MFCD("MAIN.MIX", &FastKey);
+		
+		assert(MainMix != NULL);
+//		ConquerMix = new MFCD("CONQUER.MIX", &FastKey);
+
+		if (CCFileClass("MOVIES1.MIX").Is_Available())
+			{
+			MoviesMix = new MFCD("MOVIES1.MIX", &FastKey);
+			}
+		else
+			{
+			MoviesMix = new MFCD("MOVIES2.MIX", &FastKey);
+			}
+		assert(MoviesMix != NULL);
+		GeneralMix = new MFCD("GENERAL.MIX", &FastKey);
+		ScoreMix = new MFCD("SCORES.MIX", &FastKey);
+		ThemeClass::Scan();
+		}
+
+	if (theme_playing != THEME_NONE)
+		{
+		Theme.Queue_Song(theme_playing);
+		}
+
+	return(true);
+#endif
+	}
 
 
 #endif	//	FIXIT_VERSION_3
