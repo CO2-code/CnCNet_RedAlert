@@ -60,6 +60,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include "diaglog.h"
 #include	"loaddlg.h"
 #ifdef WIN32
 #ifdef WINSOCK_IPX
@@ -627,9 +628,12 @@ bool Select_Game(bool fade)
 #endif
 
 		if (LaunchedFromSpawner) {
+			RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Select_Game: entering Spawner startup");
 			if (!Read_Spawner_Game_Options_And_Launch_Match()) {
+				RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Select_Game: Spawner initialization failed");
 				return(false);
 			}
+			RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Select_Game: Spawner settings loaded; proceeding with common startup");
 			process = false;
 			display = false;
 			selection = SEL_MULTIPLAYER_GAME;
@@ -1771,7 +1775,9 @@ void Anim_Init(void)
  ***********************************************************************************************/
 static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 {
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: reading SPAWN.INI");
 	if (SpawnerActive) {
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: duplicate launch initialization attempted");
 		return(false);
 	}
 	SpawnerActive = true;
@@ -1779,15 +1785,18 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	CCFileClass spawnfile;
 	spawnfile.Open("SPAWN.INI");
 	if (!spawnfile.Is_Available()) {
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: SPAWN.INI not found");
 		WWMessageBox().Process("CnCNet Spawner: SPAWN.INI was not found.", TXT_OK);
 		return(false);
 	}
 
 	INIClass spawnini;
 	if (!spawnini.Load(spawnfile)) {
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: INIClass::Load failed for SPAWN.INI");
 		WWMessageBox().Process("CnCNet Spawner: SPAWN.INI could not be read.", TXT_OK);
 		return(false);
 	}
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: SPAWN.INI loaded successfully");
 
 	Session.Type = GAME_SKIRMISH;
 	Session.CommProtocol = COMM_PROTOCOL_MULTI_E_COMP;
@@ -1838,6 +1847,11 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	Scen.RandomNumber = Seed;
 	CustomSeed = Seed;
 	Options.GameSpeed = spawnini.Get_Int("Settings", "GameSpeed", 1);
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+		"Spawner settings: bases=%d credits=%d oreRegenerates=%d crates=%d unitCount=%d aiPlayers=%d gameSpeed=%d aftermath=%d",
+		Session.Options.Bases, Session.Options.Credits, Session.Options.Tiberium,
+		Session.Options.Goodies, Session.Options.UnitCount, Session.Options.AIPlayers,
+		Options.GameSpeed, aftermath ? 1 : 0);
 
 	/*
 	** Build the player list. The first entry is always the local player;
@@ -1847,6 +1861,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	nameBuffer[0] = 0;
 	spawnini.Get_String("Settings", "Name", "", nameBuffer, sizeof(nameBuffer));
 	if (nameBuffer[0] == 0) {
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: local player name is missing");
 		WWMessageBox().Process("CnCNet Spawner: the local player name is missing.", TXT_OK);
 		return(false);
 	}
@@ -1866,6 +1881,8 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	Session.PrefColor = player->Player.Color;
 	Session.House = player->Player.House;
 	Session.Players.Add(player);
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: local player='%s' side=%d color=%d",
+		player->Name, (int)player->Player.House, (int)player->Player.Color);
 
 	for (int playerIndex = 1; playerIndex < MAX_MPLAYER_COLORS; playerIndex++) {
 		char section[32];
@@ -1908,6 +1925,9 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		other->Address.Set_Address(networkNumber, networkNode);
 		Session.Players.Add(other);
 		Session.Type = GAME_INTERNET;
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: remote player[%d]='%s' side=%d color=%d port=%d",
+			playerIndex, other->Name, (int)other->Player.House,
+			(int)other->Player.Color, otherPort);
 	}
 
 	int tunnelPort = spawnini.Get_Int("Tunnel", "Port", 0);
@@ -1916,6 +1936,9 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		localPort = 1234;
 	}
 	PlanetWestwoodPortNumber = (tunnelPort != 0) ? 0 : localPort;
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+		"Spawner networking settings: type=%d tunnelPort=%d localPort=%d selectedPort=%d",
+		(int)Session.Type, tunnelPort, localPort, PlanetWestwoodPortNumber);
 
 	if (spawnini.Get_Bool("Settings", "IsSinglePlayer", false)) {
 		Session.Type = GAME_NORMAL;
@@ -1930,8 +1953,10 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 			PacketTransport = NULL;
 		}
 		PacketTransport = new UDPInterfaceClass;
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: initializing UDP transport protocol=%d", (int)Session.CommProtocol);
 		if (PacketTransport == NULL || !PacketTransport->Init() ||
 			!PacketTransport->Open_Socket(0) || !PacketTransport->Start_Listening()) {
+			RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: UDP transport initialization failed");
 			if (PacketTransport != NULL) {
 				delete PacketTransport;
 				PacketTransport = NULL;
@@ -1945,7 +1970,10 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		Session.MaxAhead = spawnini.Get_Int("Settings", "MaxAhead", 15);
 		Session.FrameSendRate = spawnini.Get_Int("Settings", "FrameSendRate", 3);
 		Ipx.Set_Timing(25, -1, 744);
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: UDP transport initialized; MaxAhead=%d FrameSendRate=%d",
+			Session.MaxAhead, Session.FrameSendRate);
 #else
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: build has no WINSOCK_IPX UDP support");
 		WWMessageBox().Process("CnCNet Spawner: this build has no UDP networking support.", TXT_OK);
 		return(false);
 #endif
@@ -1953,16 +1981,21 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 
 	if (spawnini.Get_Bool("Settings", "LoadSaveGame", false)) {
 		int saveGameNumber = spawnini.Get_Int("Settings", "SaveGameNumber", 1000);
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: loading save game number=%d", saveGameNumber);
 		Init_Random();
 		if (!Load_Game(saveGameNumber)) {
+			RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: Load_Game failed for save number=%d", saveGameNumber);
 			WWMessageBox().Process("CnCNet Spawner: the requested save game could not be loaded.", TXT_OK);
 			return(false);
 		}
 		SpawnerSaveLoaded = true;
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: save game loaded successfully");
 	} else {
 		SpawnerScenarioName[0] = 0;
 		spawnini.Get_String("Settings", "Scenario", "", SpawnerScenarioName, sizeof(SpawnerScenarioName));
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: configured scenario='%s'", SpawnerScenarioName);
 		if (SpawnerScenarioName[0] == 0) {
+			RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: scenario name is missing");
 			WWMessageBox().Process("CnCNet Spawner: the scenario name is missing.", TXT_OK);
 			return(false);
 		}
@@ -1973,6 +2006,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		*/
 		CCFileClass scenarioFile(SpawnerScenarioName);
 		if (!scenarioFile.Is_Available()) {
+			RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Spawner: scenario file not available: '%s'", SpawnerScenarioName);
 			char message[640];
 			sprintf(message, "CnCNet Spawner: scenario file not found:\n%s", SpawnerScenarioName);
 			WWMessageBox().Process(message, TXT_OK);
@@ -1981,8 +2015,12 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 
 		strncpy(Scen.ScenarioName, SpawnerScenarioName, sizeof(Scen.ScenarioName) - 1);
 		Scen.ScenarioName[sizeof(Scen.ScenarioName) - 1] = 0;
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: scenario file is available; stored scenario name='%s'", Scen.ScenarioName);
 	}
 
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+		"Spawner: options ready; sessionType=%d players=%d scenario='%s'",
+		(int)Session.Type, Session.Players.Count(), SpawnerScenarioName);
 	return(true);
 }
 
