@@ -42,6 +42,161 @@
 #include "function.h"
 #include "vortex.h"
 #include	<stdarg.h>
+#include <time.h>
+#include "diaglog.h"
+
+/*
+** Lightweight diagnostic logging for the classic Watcom build.
+** Keep this in DEBUG.CPP so no new object/library entry is needed.
+*/
+static FILE *RA_DiagLogFile = NULL;
+static int RA_DiagLogOpenAttempted = 0;
+static int RA_DiagLogInitialized = 0;
+
+static char const *RA_DiagLog_Level_Name(int level)
+{
+	switch (level) {
+		case RA_DIAG_LOG_TRACE: return("TRACE");
+		case RA_DIAG_LOG_INFO:  return("INFO");
+		case RA_DIAG_LOG_WARN:  return("WARN");
+		case RA_DIAG_LOG_ERROR: return("ERROR");
+		case RA_DIAG_LOG_FATAL: return("FATAL");
+		default:                return("UNKNOWN");
+	}
+}
+
+static void RA_DiagLog_Open(int truncate)
+{
+	if (RA_DiagLogFile != NULL) {
+		return;
+	}
+	if (RA_DiagLogOpenAttempted && !truncate) {
+		return;
+	}
+
+	RA_DiagLogOpenAttempted = 1;
+	RA_DiagLogFile = fopen("RA_DIAG.LOG", truncate ? "wt" : "at");
+}
+
+void RA_DiagLog_Initialize(void)
+{
+	if (RA_DiagLogInitialized) {
+		return;
+	}
+	RA_DiagLogInitialized = 1;
+	RA_DiagLog_Open(1);
+	if (RA_DiagLogFile == NULL) {
+		return;
+	}
+
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "============================================================");
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "RA1 diagnostic log started");
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Log file: RA_DIAG.LOG (each message is flushed immediately)");
+}
+
+void RA_DiagLog_Write(int level, char const *format, ...)
+{
+	time_t now;
+	struct tm *timeInfo;
+	char stamp[32];
+	va_list args;
+
+	if (RA_DiagLogFile == NULL) {
+		RA_DiagLog_Open(0);
+	}
+	if (RA_DiagLogFile == NULL) {
+		return;
+	}
+
+	time(&now);
+	timeInfo = localtime(&now);
+	if (timeInfo != NULL) {
+		sprintf(stamp, "%04d-%02d-%02d %02d:%02d:%02d",
+			timeInfo->tm_year + 1900,
+			timeInfo->tm_mon + 1,
+			timeInfo->tm_mday,
+			timeInfo->tm_hour,
+			timeInfo->tm_min,
+			timeInfo->tm_sec);
+	} else {
+		strcpy(stamp, "0000-00-00 00:00:00");
+	}
+
+	fprintf(RA_DiagLogFile, "%s [%s] ", stamp, RA_DiagLog_Level_Name(level));
+	if (format != NULL) {
+		va_start(args, format);
+		vfprintf(RA_DiagLogFile, format, args);
+		va_end(args);
+	} else {
+		fprintf(RA_DiagLogFile, "(null log message)");
+	}
+	fputc('\n', RA_DiagLogFile);
+	fflush(RA_DiagLogFile);
+}
+
+void RA_DiagLog_Flush(void)
+{
+	if (RA_DiagLogFile != NULL) {
+		fflush(RA_DiagLogFile);
+	}
+}
+
+void RA_DiagLog_Close(void)
+{
+	if (RA_DiagLogFile != NULL) {
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "RA1 diagnostic log closed");
+		fflush(RA_DiagLogFile);
+		fclose(RA_DiagLogFile);
+		RA_DiagLogFile = NULL;
+	}
+}
+
+#ifdef WIN32
+static LONG WINAPI RA_DiagLog_UnhandledExceptionFilter(EXCEPTION_POINTERS *exceptionInfo)
+{
+	if (exceptionInfo != NULL && exceptionInfo->ExceptionRecord != NULL) {
+		RA_DiagLog_Write(RA_DIAG_LOG_FATAL,
+			"UNHANDLED EXCEPTION code=0x%08lX address=0x%08lX flags=0x%08lX",
+			(unsigned long)exceptionInfo->ExceptionRecord->ExceptionCode,
+			(unsigned long)exceptionInfo->ExceptionRecord->ExceptionAddress,
+			(unsigned long)exceptionInfo->ExceptionRecord->ExceptionFlags);
+
+		if (exceptionInfo->ContextRecord != NULL) {
+			RA_DiagLog_Write(RA_DIAG_LOG_FATAL,
+				"REGISTERS EIP=0x%08lX EAX=0x%08lX EBX=0x%08lX ECX=0x%08lX EDX=0x%08lX",
+				(unsigned long)exceptionInfo->ContextRecord->Eip,
+				(unsigned long)exceptionInfo->ContextRecord->Eax,
+				(unsigned long)exceptionInfo->ContextRecord->Ebx,
+				(unsigned long)exceptionInfo->ContextRecord->Ecx,
+				(unsigned long)exceptionInfo->ContextRecord->Edx);
+			RA_DiagLog_Write(RA_DIAG_LOG_FATAL,
+				"REGISTERS ESI=0x%08lX EDI=0x%08lX EBP=0x%08lX ESP=0x%08lX",
+				(unsigned long)exceptionInfo->ContextRecord->Esi,
+				(unsigned long)exceptionInfo->ContextRecord->Edi,
+				(unsigned long)exceptionInfo->ContextRecord->Ebp,
+				(unsigned long)exceptionInfo->ContextRecord->Esp);
+		}
+	} else {
+		RA_DiagLog_Write(RA_DIAG_LOG_FATAL, "UNHANDLED EXCEPTION (no exception details available)");
+	}
+
+	RA_DiagLog_Flush();
+
+	/* Preserve the normal Windows exception handling path after recording details. */
+	return(EXCEPTION_CONTINUE_SEARCH);
+}
+
+void RA_DiagLog_InstallCrashHandler(void)
+{
+	SetUnhandledExceptionFilter(RA_DiagLog_UnhandledExceptionFilter);
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Unhandled-exception diagnostic handler installed");
+}
+#else
+void RA_DiagLog_InstallCrashHandler(void)
+{
+}
+#endif
+
 
 
 #ifdef CHEAT_KEYS
