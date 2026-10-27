@@ -44,7 +44,6 @@
 #include "visudlg.h"
 #include "gamedlg.h"
 #include "textbtn.h"
-#include "descdlg.h"
 
 #ifdef FIXIT_VERSION_3		//	Stalemate games.
 #include "WolStrng.h"
