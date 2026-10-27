@@ -703,7 +703,7 @@ int TechnoClass::Time_To_Build(void) const
 	if (LaunchedFromSpawner) {
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
 			"Spawner build time: house=%08lX session=%d product_rtti=%d penalty=%d factories=%d before_bonus=%d after_bonus=%d",
-			(unsigned long)House, (int)Session.Type, (int)What_Am_I(),
+			(unsigned long)House.operator->(), (int)Session.Type, (int)What_Am_I(),
 			UnitBuildPenalty, divisor, spawner_value_before_factory_bonus, val);
 	}
 	return(val);
