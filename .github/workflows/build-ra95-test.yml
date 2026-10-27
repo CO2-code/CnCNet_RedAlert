@@ -105,11 +105,9 @@ jobs:
         if: success()
         shell: pwsh
         run: |
-          @"
-          ### RA95 build uploaded
-
-          - Source ref: $env:BUILD_REF
-          - Commit: $env:BUILD_SHA
-          - Artifact: ${{ steps.meta.outputs.artifact }}
-          - Contains `RA95.EXE` and `build-info.txt`; expires after 14 days.
-          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### RA95 build uploaded"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Source ref: $env:BUILD_REF"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Commit: $env:BUILD_SHA"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Artifact: ${{ steps.meta.outputs.artifact }}"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Contains RA95.EXE and build-info.txt; expires after 14 days."
