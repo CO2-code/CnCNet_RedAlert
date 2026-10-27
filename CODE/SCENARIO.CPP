@@ -63,6 +63,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include "diaglog.h"
 
 extern bool LaunchedFromSpawner;
 #ifdef WIN32
@@ -309,12 +310,18 @@ bool ScenarioClass::Set_Global_To(int global, bool value)
  *=============================================================================================*/
 bool Start_Scenario(char * name, bool briefing)
 {
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Start_Scenario: begin file='%s' briefing=%d",
+		name != NULL ? name : "(null)", briefing ? 1 : 0);
 //BG	Theme.Queue_Song(THEME_QUIET);
 Theme.Stop();
 	IsTanyaDead = SaveTanya;
 	if (!Read_Scenario(name)) {
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Start_Scenario: Read_Scenario failed for '%s'",
+			name != NULL ? name : "(null)");
 		return(false);
 	}
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Start_Scenario: scenario data loaded; storedName='%s' description='%s'",
+		Scen.ScenarioName, Scen.Description);
 
 	/*
 	**	Play the winning movie and then start the next scenario.
@@ -417,10 +424,14 @@ Theme.Stop();
  *=============================================================================================*/
 bool Read_Scenario(char * name)
 {
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+		"Read_Scenario: begin file='%s' sessionType=%d storedName='%s' scenarioId=%d",
+		name != NULL ? name : "(null)", (int)Session.Type, Scen.ScenarioName, Scen.Scenario);
 	BStart(BENCH_SCENARIO);
 	Clear_Scenario();
 	ScenarioInit++;
 	if (Read_Scenario_INI(name)) {
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Read_Scenario: Read_Scenario_INI succeeded");
 #ifdef FIXIT_CSII	//	ajw - Added runtime check for Aftermath to skirmish mode case.
 		bool readini = false;
 		switch(Session.Type) {
@@ -489,8 +500,12 @@ bool Read_Scenario(char * name)
 			}
 		}
 #endif
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Read_Scenario: beginning Fill_In_Data");
 		Fill_In_Data();
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Read_Scenario: Fill_In_Data completed");
 	} else {
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Read_Scenario: Read_Scenario_INI failed for '%s'",
+			name != NULL ? name : "(null)");
 		GamePalette.Set(FADE_PALETTE_FAST, Call_Back);
 //		Fade_Palette_To(GamePalette, FADE_PALETTE_FAST, Call_Back);
 		Show_Mouse();
@@ -1972,6 +1987,10 @@ void ScenarioClass::Set_Scenario_Name(char const * name)
  *=============================================================================================*/
 bool Read_Scenario_INI(char * fname, bool )
 {
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+		"Read_Scenario_INI: begin file='%s' sessionType=%d storedName='%s' scenarioId=%d spawner=%d",
+		fname != NULL ? fname : "(null)", (int)Session.Type, Scen.ScenarioName,
+		Scen.Scenario, LaunchedFromSpawner ? 1 : 0);
 //	char fname[_MAX_FNAME+_MAX_EXT];			// full INI filename
 
 
@@ -2103,13 +2122,16 @@ bool Read_Scenario_INI(char * fname, bool )
 	**	Create scenario filename and read the file.
 	*/
 //	sprintf(fname, "%s.INI", root);
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Read_Scenario_INI: loading scenario INI '%s'", fname);
 	CCINIClass ini;
 	CCFileClass file(fname);
 //	file.Cache();
 
 	int result = ini.Load(file, true);
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Read_Scenario_INI: INI loader returned %d for '%s'", result, fname);
 	if (result == 0) {
 //		Mono_Printf("ini.Load failed");
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Read_Scenario_INI: INI load failed for '%s'", fname);
 		return(false);
 	}
 
@@ -2122,6 +2144,11 @@ bool Read_Scenario_INI(char * fname, bool )
 	** Don't reject those paths based on that filename heuristic. Actual file
 	** open/parse failures (result 0) are still rejected above.
 	*/
+	if (result == 2) {
+		RA_DiagLog_Write(RA_DIAG_LOG_WARN,
+			"Read_Scenario_INI: checksum mismatch for '%s' (Spawner=%d); applying policy",
+			fname, LaunchedFromSpawner ? 1 : 0);
+	}
 	if (result == 2 && !LaunchedFromSpawner) {
 //		if (Session.Type == GAME_NORMAL || Session.ScenarioIsOfficial) {
 			/*
@@ -2254,14 +2281,18 @@ bool Read_Scenario_INI(char * fname, bool )
 	**	Read in the specific information for each of the house types.  This creates
 	**	the houses of different types.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: HouseClass::Read_INI begin");
 	HouseClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: HouseClass::Read_INI complete");
 	Call_Back();
 
 	/*
 	**	Read in the team-type data. The team types must be created before any
 	**	triggers can be created.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: TeamTypeClass::Read_INI begin");
 	TeamTypeClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: TeamTypeClass::Read_INI complete");
 	Call_Back();
 
 
@@ -2290,7 +2321,9 @@ bool Read_Scenario_INI(char * fname, bool )
 	**	Read in the trigger data. The triggers must be created before any other
 	**	objects can be initialized.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: TriggerTypeClass::Read_INI begin");
 	TriggerTypeClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: TriggerTypeClass::Read_INI complete");
 	Call_Back();
 
 
@@ -2298,7 +2331,9 @@ bool Read_Scenario_INI(char * fname, bool )
 	**	Read in the map control values. This includes dimensions
 	**	as well as theater information.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Map.Read_INI begin");
 	Map.Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Map.Read_INI complete; theater=%d", (int)Scen.Theater);
 	Call_Back();
 
 
@@ -2311,21 +2346,29 @@ bool Read_Scenario_INI(char * fname, bool )
 	/*
 	**	Read in and place the 3D terrain objects.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: TerrainClass::Read_INI begin");
 	TerrainClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: TerrainClass::Read_INI complete");
 	Call_Back();
 	/*
 	**	Read in and place the units (all sides).
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: UnitClass::Read_INI begin");
 	UnitClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: UnitClass::Read_INI complete");
 	Call_Back();
 
-    	VesselClass::Read_INI(ini);
+    	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: VesselClass::Read_INI begin");
+	VesselClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: VesselClass::Read_INI complete");
 	Call_Back();
 
 	/*
 	**	Read in and place the infantry units (all sides).
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: InfantryClass::Read_INI begin");
 	InfantryClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: InfantryClass::Read_INI complete");
 	Call_Back();
 
 
@@ -2333,25 +2376,33 @@ bool Read_Scenario_INI(char * fname, bool )
 	/*
 	**	Read in and place all the buildings on the map.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: BuildingClass::Read_INI begin");
 	BuildingClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: BuildingClass::Read_INI complete");
 	Call_Back();
 
 	/*
 	**	Read in the AI's base information.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Base.Read_INI begin");
 	Base.Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Base.Read_INI complete");
 	Call_Back();
 
       	/*
 	**	Read in any normal overlay objects.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: OverlayClass::Read_INI begin");
 	OverlayClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: OverlayClass::Read_INI complete");
 	Call_Back();
 
 	/*
 	**	Read in any smudge overlays.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: SmudgeClass::Read_INI begin");
 	SmudgeClass::Read_INI(ini);
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: SmudgeClass::Read_INI complete");
 	Call_Back();
 
 	/*	Moved above ini.Get_TextBlock(...) so Xlat mission.ini could be loaded
@@ -2372,7 +2423,9 @@ bool Read_Scenario_INI(char * fname, bool )
 	**	Perform a final overpass of the map. This handles smoothing of certain
 	**	types of terrain (tiberium).
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Map.Overpass begin");
 	Map.Overpass();
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Map.Overpass complete");
 	Call_Back();
 
 	/*
