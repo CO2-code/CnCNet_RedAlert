@@ -445,7 +445,7 @@ bool FactoryClass::Start(void)
 			if (LaunchedFromSpawner && Object) {
 				RA_DiagLog_Write(RA_DIAG_LOG_INFO,
 					"Spawner factory START: house=%08lX product_rtti=%d counted_factories=%d build_time=%d rate=%d",
-					(unsigned long)House.operator->(), (int)Object->What_Am_I(),
+					(unsigned long)House, (int)Object->What_Am_I(),
 					House->Factory_Count(Object->What_Am_I()), time, rate);
 			}
 
