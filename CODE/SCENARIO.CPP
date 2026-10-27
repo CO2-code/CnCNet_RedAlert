@@ -2300,6 +2300,7 @@ bool Read_Scenario_INI(char * fname, bool )
 	**	Assign PlayerPtr by reading the player's house from the INI;
 	**	Must be done before any TechnoClass objects are created.
 	*/
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: assigning player house begin");
 	if (Session.Type == GAME_NORMAL) {
 		PlayerPtr = HouseClass::As_Pointer(ini.Get_HousesType(BASIC, "Player", HOUSE_GREECE));
 		PlayerPtr->Assign_Handicap(Scen.Difficulty);
@@ -2312,10 +2313,13 @@ bool Read_Scenario_INI(char * fname, bool )
 		PlayerPtr->Credits += carryover;
 		PlayerPtr->Control.InitialCredits += carryover;
 	} else {
+		RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Assign_Houses begin");
 		Assign_Houses();
+		RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Assign_Houses complete");
 	}
 	PlayerPtr->IsHuman = true;
 	PlayerPtr->IsPlayerControl = true;
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: player house assignment complete");
 
 	/*
 	**	Read in the trigger data. The triggers must be created before any other
@@ -2410,6 +2414,7 @@ bool Read_Scenario_INI(char * fname, bool )
 	**	the mission.ini file.  VG 10/17/96
 	*/
 	INIClass mini;
+	RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: loading briefing fallback from MISSION.INI");
 	mini.Load(CCFileClass("MISSION.INI"));
 	mini.Get_TextBlock(fname, Scen.BriefingText, sizeof(Scen.BriefingText));
 
@@ -2442,7 +2447,9 @@ bool Read_Scenario_INI(char * fname, bool )
 		**	(Must be done after all objects are read in from the INI)
 		*/
 		if ( (Session.Options.AIPlayers + Session.Players.Count() < Rule.MaxPlayers) && !Debug_Map) {
+			RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Remove_AI_Players begin");
 			Remove_AI_Players();
+			RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Remove_AI_Players complete");
 		}
 
 		/*
@@ -2454,7 +2461,9 @@ bool Read_Scenario_INI(char * fname, bool )
 		if (!Debug_Map) {
 			int save_init = ScenarioInit;			// turn ScenarioInit off
 			ScenarioInit = 0;
+			RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Create_Units begin");
 			Create_Units(ini.Get_Bool("Basic", "Official", false));
+			RA_DiagLog_Write(RA_DIAG_LOG_TRACE, "Scenario stage: Create_Units complete");
 			ScenarioInit = save_init;				// turn ScenarioInit back on
 		}
 
@@ -2490,6 +2499,9 @@ bool Read_Scenario_INI(char * fname, bool )
 	}	
 #endif
 	ScenarioInit--;
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+		"Read_Scenario_INI: complete for '%s' description='%s' mapDimensions=%dx%d",
+		fname, Scen.Description, Map.MapCellWidth, Map.MapCellHeight);
 	return(true);
 }
 
