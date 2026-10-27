@@ -6566,7 +6566,7 @@ void HouseClass::Active_Remove(TechnoClass const * techno)
 	if (techno == NULL) return;
 
 	if (techno->What_Am_I() == RTTI_BUILDING) {
-		int to_build = ((BuildingClass *)techno)->Class->ToBuild;
+		RTTIType to_build = ((BuildingClass *)techno)->Class->ToBuild;
 		int * fptr = Factory_Counter(to_build);
 		if (fptr != NULL) {
 			int old_count = *fptr;
@@ -6574,12 +6574,12 @@ void HouseClass::Active_Remove(TechnoClass const * techno)
 			if (LaunchedFromSpawner) {
 				RA_DiagLog_Write(RA_DIAG_LOG_INFO,
 					"Spawner factory count REMOVE: house=%08lX object=%08lX to_build=%d count=%d->%d",
-					(unsigned long)this, (unsigned long)techno, to_build, old_count, *fptr);
+					(unsigned long)this, (unsigned long)techno, (int)to_build, old_count, *fptr);
 			}
 		} else if (LaunchedFromSpawner) {
 			RA_DiagLog_Write(RA_DIAG_LOG_TRACE,
 				"Spawner building REMOVE not counted: house=%08lX object=%08lX to_build=%d",
-				(unsigned long)this, (unsigned long)techno, to_build);
+				(unsigned long)this, (unsigned long)techno, (int)to_build);
 		}
 	}
 }
@@ -6605,7 +6605,7 @@ void HouseClass::Active_Add(TechnoClass const * techno)
 	if (techno == NULL) return;
 
 	if (techno->What_Am_I() == RTTI_BUILDING) {
-		int to_build = ((BuildingClass *)techno)->Class->ToBuild;
+		RTTIType to_build = ((BuildingClass *)techno)->Class->ToBuild;
 		int * fptr = Factory_Counter(to_build);
 		if (fptr != NULL) {
 			int old_count = *fptr;
@@ -6613,12 +6613,12 @@ void HouseClass::Active_Add(TechnoClass const * techno)
 			if (LaunchedFromSpawner) {
 				RA_DiagLog_Write(RA_DIAG_LOG_INFO,
 					"Spawner factory count ADD: house=%08lX object=%08lX to_build=%d count=%d->%d",
-					(unsigned long)this, (unsigned long)techno, to_build, old_count, *fptr);
+					(unsigned long)this, (unsigned long)techno, (int)to_build, old_count, *fptr);
 			}
 		} else if (LaunchedFromSpawner) {
 			RA_DiagLog_Write(RA_DIAG_LOG_TRACE,
 				"Spawner building ADD not counted: house=%08lX object=%08lX to_build=%d",
-				(unsigned long)this, (unsigned long)techno, to_build);
+				(unsigned long)this, (unsigned long)techno, (int)to_build);
 		}
 	}
 }
