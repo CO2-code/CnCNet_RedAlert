@@ -134,6 +134,9 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include "diaglog.h"
+
+extern bool LaunchedFromSpawner;
 #include	"vortex.h"
 
 //#include "WolDebug.h"
@@ -6563,9 +6566,20 @@ void HouseClass::Active_Remove(TechnoClass const * techno)
 	if (techno == NULL) return;
 
 	if (techno->What_Am_I() == RTTI_BUILDING) {
-		int * fptr = Factory_Counter(((BuildingClass *)techno)->Class->ToBuild);
+		int to_build = ((BuildingClass *)techno)->Class->ToBuild;
+		int * fptr = Factory_Counter(to_build);
 		if (fptr != NULL) {
+			int old_count = *fptr;
 			*fptr = *fptr - 1;
+			if (LaunchedFromSpawner) {
+				RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+					"Spawner factory count REMOVE: house=%08lX object=%08lX to_build=%d count=%d->%d",
+					(unsigned long)this, (unsigned long)techno, to_build, old_count, *fptr);
+			}
+		} else if (LaunchedFromSpawner) {
+			RA_DiagLog_Write(RA_DIAG_LOG_TRACE,
+				"Spawner building REMOVE not counted: house=%08lX object=%08lX to_build=%d",
+				(unsigned long)this, (unsigned long)techno, to_build);
 		}
 	}
 }
@@ -6591,9 +6605,20 @@ void HouseClass::Active_Add(TechnoClass const * techno)
 	if (techno == NULL) return;
 
 	if (techno->What_Am_I() == RTTI_BUILDING) {
-		int * fptr = Factory_Counter(((BuildingClass *)techno)->Class->ToBuild);
+		int to_build = ((BuildingClass *)techno)->Class->ToBuild;
+		int * fptr = Factory_Counter(to_build);
 		if (fptr != NULL) {
+			int old_count = *fptr;
 			*fptr = *fptr + 1;
+			if (LaunchedFromSpawner) {
+				RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+					"Spawner factory count ADD: house=%08lX object=%08lX to_build=%d count=%d->%d",
+					(unsigned long)this, (unsigned long)techno, to_build, old_count, *fptr);
+			}
+		} else if (LaunchedFromSpawner) {
+			RA_DiagLog_Write(RA_DIAG_LOG_TRACE,
+				"Spawner building ADD not counted: house=%08lX object=%08lX to_build=%d",
+				(unsigned long)this, (unsigned long)techno, to_build);
 		}
 	}
 }
