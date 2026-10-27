@@ -52,6 +52,9 @@
 static FILE *RA_DiagLogFile = NULL;
 static int RA_DiagLogOpenAttempted = 0;
 static int RA_DiagLogInitialized = 0;
+#ifdef WIN32
+static int RA_DiagLogCrashHandlerActive = 0;
+#endif
 
 static char const *RA_DiagLog_Level_Name(int level)
 {
@@ -154,6 +157,14 @@ void RA_DiagLog_Close(void)
 #ifdef WIN32
 static LONG WINAPI RA_DiagLog_UnhandledExceptionFilter(EXCEPTION_POINTERS *exceptionInfo)
 {
+	/*
+	** Don't recurse if the logger itself faults while processing an exception.
+	*/
+	if (RA_DiagLogCrashHandlerActive) {
+		return(EXCEPTION_CONTINUE_SEARCH);
+	}
+	RA_DiagLogCrashHandlerActive = 1;
+
 	if (exceptionInfo != NULL && exceptionInfo->ExceptionRecord != NULL) {
 		RA_DiagLog_Write(RA_DIAG_LOG_FATAL,
 			"UNHANDLED EXCEPTION code=0x%08lX address=0x%08lX flags=0x%08lX",
