@@ -48,7 +48,15 @@ jobs:
           "artifact=RA95-$branch-$short" >> $env:GITHUB_OUTPUT
           Write-Host "Building ref '$env:BUILD_REF' at $sha"
 
+      - name: Cache build dependency archive
+        id: deps-cache
+        uses: actions/cache@v4
+        with:
+          path: deps.zip
+          key: ra-build-dependencies-v1
+
       - name: Download build dependencies
+        if: steps.deps-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: curl.exe -L --fail --retry 3 -o deps.zip "$env:DEPS_URL"
 
@@ -97,8 +105,9 @@ jobs:
         if: success()
         shell: pwsh
         run: |
-          "### RA95 build uploaded" >> $env:GITHUB_STEP_SUMMARY
-          "- Source ref: `$env:BUILD_REF`" >> $env:GITHUB_STEP_SUMMARY
-          "- Commit: `$env:BUILD_SHA`" >> $env:GITHUB_STEP_SUMMARY
-          "- Artifact: `${{ steps.meta.outputs.artifact }}`" >> $env:GITHUB_STEP_SUMMARY
-          "- Contains `RA95.EXE` and `build-info.txt`; expires after 14 days." >> $env:GITHUB_STEP_SUMMARY
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### RA95 build uploaded"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Source ref: $env:BUILD_REF"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Commit: $env:BUILD_SHA"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Artifact: ${{ steps.meta.outputs.artifact }}"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Contains RA95.EXE and build-info.txt; expires after 14 days."
