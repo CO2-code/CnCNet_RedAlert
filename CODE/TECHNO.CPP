@@ -134,6 +134,9 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include "diaglog.h"
+
+extern bool LaunchedFromSpawner;
 
 
 /***************************************************************************
@@ -158,7 +161,7 @@ const char* NewName[] = {
 	"Scout Ant",	  			"Kundschafter-Ameise",
 	"Warrior Ant",    		"Krieger-Ameise",
 	"Fire Ant",	  				"Feuer-Ameise",
-	"Queen Ant",	  			"Ameisenk”nigin",
+	"Queen Ant",	  			"AmeisenkÂ”nigin",
 	"ATS",						"Angriffs-U-Boot",
 	"Tesla Tank",	  			"Telsapanzer",
 	"Volkov",  					"Modell Volkov",
@@ -174,7 +177,7 @@ const char* NewName[] = {
 #ifdef FRENCH
 const char* NewName[] = {
 	"Scout Ant",	  			"Fourmi de Reconnaissance",
-	"Warrior Ant",    		"Fourmi GuerriŠre",
+	"Warrior Ant",    		"Fourmi GuerriÂŠre",
 	"Fire Ant",	  				"Fourmi Lance-Flammes",
 	"Queen Ant",	  			"Reine des Fourmis",
 	"ATS", 						"SMTA",
@@ -182,9 +185,9 @@ const char* NewName[] = {
 	"Volkov",  					"Volkov",
 	"Chitzkoi", 				"Cyber-Chien",
 	"Stavros",					"Stavros",
-	"F-A Longbow",				"HAA (H‚licoptŠre d'Assaut Avanc‚)",
-	"Civilian Specialist",	"Sp‚cialiste Civil",
-	"Alloy Facility",			"Usine M‚tallurgique",
+	"F-A Longbow",				"HAA (HÂ‚licoptÂŠre d'Assaut AvancÂ‚)",
+	"Civilian Specialist",	"SpÂ‚cialiste Civil",
+	"Alloy Facility",			"Usine MÂ‚tallurgique",
 	NULL,
 	};
 
@@ -681,6 +684,7 @@ int TechnoClass::Time_To_Build(void) const
 	power.Inverse();
 	val *= power;
 
+	int spawner_value_before_factory_bonus = val;
 	int divisor = House->Factory_Count(What_Am_I());
 	if (divisor != 0) {
 #ifdef FIXIT_CSII	//	checked - ajw 9/28/98
@@ -694,6 +698,13 @@ int TechnoClass::Time_To_Build(void) const
 #else
 		val /= divisor;
 #endif
+	}
+
+	if (LaunchedFromSpawner) {
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+			"Spawner build time: house=%08lX session=%d product_rtti=%d penalty=%d factories=%d before_bonus=%d after_bonus=%d",
+			(unsigned long)House, (int)Session.Type, (int)What_Am_I(),
+			UnitBuildPenalty, divisor, spawner_value_before_factory_bonus, val);
 	}
 	return(val);
 }
