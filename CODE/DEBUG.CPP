@@ -172,6 +172,14 @@ static LONG WINAPI RA_DiagLog_UnhandledExceptionFilter(EXCEPTION_POINTERS *excep
 			(unsigned long)exceptionInfo->ExceptionRecord->ExceptionAddress,
 			(unsigned long)exceptionInfo->ExceptionRecord->ExceptionFlags);
 
+		if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
+			exceptionInfo->ExceptionRecord->NumberParameters >= 2) {
+			RA_DiagLog_Write(RA_DIAG_LOG_FATAL,
+				"ACCESS VIOLATION operation=%lu target=0x%08lX (0=read, 1=write, 8=execute)",
+				(unsigned long)exceptionInfo->ExceptionRecord->ExceptionInformation[0],
+				(unsigned long)exceptionInfo->ExceptionRecord->ExceptionInformation[1]);
+		}
+
 		if (exceptionInfo->ContextRecord != NULL) {
 			RA_DiagLog_Write(RA_DIAG_LOG_FATAL,
 				"REGISTERS EIP=0x%08lX EAX=0x%08lX EBX=0x%08lX ECX=0x%08lX EDX=0x%08lX",
