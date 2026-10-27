@@ -63,6 +63,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+
+extern bool LaunchedFromSpawner;
 #ifdef WIN32
 #include "tcpip.h"
 #include "ccdde.h"
@@ -471,6 +473,7 @@ bool Read_Scenario(char * name)
 					Emergency_Exit(EXIT_FAILURE);
 		     	}
 			}
+			if (!LaunchedFromSpawner) {
 			CCINIClass ini;
 			if (ini.Load(CCFileClass("MPLAYER.INI"), false)) {
 				Rule.General(ini);
@@ -482,6 +485,7 @@ bool Read_Scenario(char * name)
 				Rule.IQ(ini);
 				Rule.Objects(ini);
 				Rule.Difficulty(ini);
+			}
 			}
 		}
 #endif
