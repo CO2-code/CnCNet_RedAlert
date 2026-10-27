@@ -86,6 +86,7 @@ B<A> test;
 
 
 #include	"function.h"
+#include "diaglog.h"
 #ifdef WIN32
 #ifdef WINSOCK_IPX
 #include	"WSProto.h"
@@ -214,14 +215,17 @@ void MPATH_Call_Back(void);
  *=============================================================================================*/
 void Main_Game(int argc, char * argv[])
 {
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Main_Game: entered argc=%d", argc);
 	static bool fade = true;
 
 	/*
 	**	Perform one-time-only initializations
 	*/
 	if (!Init_Game(argc, argv)) {
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Main_Game: Init_Game failed");
 		return;
 	}
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Main_Game: Init_Game completed");
 
 	/*
 	**	Game processing loop:
@@ -231,6 +235,9 @@ void Main_Game(int argc, char * argv[])
 	**		until they indicate that the user wants to exit the scenario.
 	*/
 	while (Select_Game(fade)) {
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+			"Main_Game: Select_Game returned true; sessionType=%d scenario='%s'",
+			(int)Session.Type, Scen.ScenarioName);
 		fade = false;
 		ScenarioInit = 0;		// Kludge.
 
