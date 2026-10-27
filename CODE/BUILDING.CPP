@@ -2407,17 +2407,37 @@ void BuildingClass::Grand_Opening(bool captured)
 			if (unit != NULL) {
 
 				/*
-				**	Try to place down the harvesters. If it could not be placed, then try
-				**	to place it in a nearby location.
+				**	Try the intended refinery exit first. If it is blocked, ask the
+				**	unit for a nearby candidate.
 				*/
 				if (!unit->Unlimbo(Cell_Coord(cell), DIR_W)) {
 					cell = unit->Nearby_Location(this);
+					bool placed = false;
 
 					/*
-					**	If the harvester could still not be placed, then refund the money
-					**	to the owner and then bail.
+					**	Try the closest candidate. If Unlimbo rejects it, try each
+					**	of its eight surrounding cells. This avoids repeatedly asking
+					**	Nearby_Location for the same candidate in the same frame.
 					*/
-					if (!unit->Unlimbo(Cell_Coord(cell), DIR_SW)) {
+					if (cell != 0 && unit->Unlimbo(Cell_Coord(cell), DIR_SW)) {
+						placed = true;
+					}
+
+					if (!placed && cell != 0) {
+						for (FacingType facing = FACING_FIRST; facing < FACING_COUNT; facing++) {
+							CELL retry_cell = Adjacent_Cell(cell, facing);
+							if (Map.In_Radar(retry_cell) && unit->Unlimbo(Cell_Coord(retry_cell), DIR_SW)) {
+								placed = true;
+								break;
+							}
+						}
+					}
+
+					/*
+					**	If all placement attempts failed, refund the harvester cost
+					**	and delete the unit that is still in limbo.
+					*/
+					if (!placed) {
 						House->Refund_Money(unit->Class->Cost_Of());
 						delete unit;
 					}
