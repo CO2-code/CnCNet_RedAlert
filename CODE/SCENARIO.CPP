@@ -398,6 +398,7 @@ Theme.Stop();
 	*/
 	Options.Set();
 
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Start_Scenario: completed successfully for '%s'", name);
 	return(true);
 }
 
