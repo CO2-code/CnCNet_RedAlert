@@ -91,6 +91,10 @@
 
 RemapControlType SidebarScheme;
 
+// Set by the -SPAWN command-line option.
+bool LaunchedFromSpawner = false;
+static bool SpawnerActive = false;
+
 #include "WolDebug.h"
 
 #ifdef CHEAT_KEYS
@@ -114,6 +118,7 @@ static void Bootstrap(void);
 //static void Init_Authorization(void);
 static void Init_Bulk_Data(void);
 static void Init_Keys(void);
+static bool Read_Spawner_Game_Options_And_Launch_Match(void);
 
 extern int UnitBuildPenalty;
 
@@ -274,13 +279,23 @@ bool Init_Game(int , char * [])
 	/*
 	**	Find and process any rules for this game.
 	*/
-	if (RuleINI.Load(CCFileClass("RULES.INI"), false)) {
-		Rule.Process(RuleINI);
+	if (LaunchedFromSpawner) {
+		if (RuleINI.Load(CCFileClass("SPAWN.XDP"), false)) {
+			Rule.Process(RuleINI);
+		}
+	} else {
+		if (RuleINI.Load(CCFileClass("RULES.INI"), false)) {
+			Rule.Process(RuleINI);
+		}
 	}
 #ifdef FIXIT_CSII	//	checked - ajw 9/28/98
 	//  Aftermath runtime change 9/29/98
 	//	This is safe to do, as only rules for aftermath units are included in this ini.
-	if (Is_Aftermath_Installed() == true) {
+	if (LaunchedFromSpawner) {
+		if (AftermathINI.Load(CCFileClass("SPAWNAM.XDP"), false)) {
+			Rule.Process(AftermathINI);
+		}
+	} else if (Is_Aftermath_Installed() == true) {
 		if (AftermathINI.Load(CCFileClass("AFTRMATH.INI"), false)) {
 			Rule.Process(AftermathINI);
 		}
@@ -553,6 +568,14 @@ bool Select_Game(bool fade)
 	**	Set default mouse shape
 	*/
 	Map.Set_Default_Mouse(MOUSE_NORMAL, false);
+
+	/*
+	**	A spawned match gets its options directly from SPAWN.INI; it does not
+	**	need the interactive main menu or multiplayer setup dialogs.
+	*/
+	if (LaunchedFromSpawner) {
+		return(Read_Spawner_Game_Options_And_Launch_Match());
+	}
 
 	/*
 	**	If the last game we played was a multiplayer game, jump right to that
@@ -1602,6 +1625,10 @@ bool Select_Game(bool fade)
  *=============================================================================================*/
 static void Play_Intro(bool sequenced)
 {
+	if (LaunchedFromSpawner) {
+		return;
+	}
+
 	static VQType _counter = VQ_FIRST;
 
 	Keyboard->Clear();
@@ -1717,6 +1744,229 @@ void Anim_Init(void)
 	}
 
 #endif	//WIN32
+}
+
+
+
+/***********************************************************************************************
+ * Read_Spawner_Game_Options_And_Launch_Match -- launch a match from SPAWN.INI.                  *
+ *                                                                                             *
+ * Initial source-level Spawner integration. Per-house overrides, spectator behavior, tunnel   *
+ * packet rewriting, and extended stat packets remain separate follow-ups.                    *
+ ***********************************************************************************************/
+static bool Read_Spawner_Game_Options_And_Launch_Match(void)
+{
+	if (SpawnerActive) {
+		return(false);
+	}
+	SpawnerActive = true;
+
+	CCFileClass spawnfile;
+	spawnfile.Open("SPAWN.INI");
+	if (!spawnfile.Is_Available()) {
+		WWMessageBox().Process("CnCNet Spawner: SPAWN.INI was not found.", TXT_OK);
+		return(false);
+	}
+
+	INIClass spawnini;
+	if (!spawnini.Load(spawnfile, false)) {
+		WWMessageBox().Process("CnCNet Spawner: SPAWN.INI could not be read.", TXT_OK);
+		return(false);
+	}
+
+	Session.Type = GAME_SKIRMISH;
+	Session.CommProtocol = (CommProtocolType)spawnini.Get_Int(
+		"Settings", "NetworkVersionProtocol", COMM_PROTOCOL_MULTI_E_COMP);
+	Session.Options.ScenarioIndex = 0;
+	Session.Options.Bases = spawnini.Get_Bool("Settings", "Bases", true);
+	Session.Options.Credits = spawnini.Get_Int("Settings", "Credits", 10000);
+	Session.Options.Tiberium = spawnini.Get_Bool("Settings", "OreRegenerates", false);
+	Session.Options.Goodies = spawnini.Get_Bool("Settings", "Crates", false);
+	Session.Options.UnitCount = spawnini.Get_Int("Settings", "UnitCount", 0);
+	Session.Options.AIPlayers = spawnini.Get_Int("Settings", "AIPlayers", 0);
+	Special.IsCaptureTheFlag = spawnini.Get_Bool("Settings", "CaptureTheFlag", false);
+	if (Special.IsCaptureTheFlag) {
+		Session.Options.Bases = 1;
+	}
+
+	Special.IsTGrowth = (Session.Options.Tiberium != 0);
+	Special.IsTSpread = (Session.Options.Tiberium != 0);
+	Special.IsShadowGrow = spawnini.Get_Bool("Settings", "ShroudRegrows", false);
+	UnitBuildPenalty = spawnini.Get_Bool("Settings", "SlowUnitBuild", false) ? 0xFA : 0x64;
+	BuildLevel = spawnini.Get_Int("Settings", "TechLevel", 10);
+
+	int aiDifficulty = spawnini.Get_Int("Settings", "AIDifficulty", 2);
+	Scen.Difficulty = DIFF_NORMAL;
+	Scen.CDifficulty = DIFF_NORMAL;
+	if (aiDifficulty < 2) {
+		Scen.Difficulty = DIFF_EASY;
+		Scen.CDifficulty = DIFF_HARD;
+	} else if (aiDifficulty > 2) {
+		Scen.Difficulty = DIFF_HARD;
+		Scen.CDifficulty = DIFF_EASY;
+	}
+
+	bool aftermath = spawnini.Get_Bool("Settings", "Aftermath", false);
+#ifdef FIXIT_VERSION_3
+	bAftermathMultiplayer = aftermath;
+#else
+	Version107InMix = aftermath;
+#endif
+#ifdef FIXIT_CSII
+	NewUnitsEnabled = aftermath;
+	if (!aftermath) {
+		SecretUnitsEnabled = false;
+	}
+#endif
+
+	Seed = spawnini.Get_Int("Settings", "Seed", 0);
+	RandNumb = Seed;
+	Scen.RandomNumber = Seed;
+	CustomSeed = Seed;
+	Options.GameSpeed = spawnini.Get_Int("Settings", "GameSpeed", 1);
+
+	/*
+	** Build the player list. The first entry is always the local player;
+	** SessionClass::Create_Connections deliberately skips that first entry.
+	*/
+	char nameBuffer[MPLAYER_NAME_MAX];
+	nameBuffer[0] = 0;
+	spawnini.Get_String("Settings", "Name", "", nameBuffer, sizeof(nameBuffer));
+	if (nameBuffer[0] == 0) {
+		WWMessageBox().Process("CnCNet Spawner: the local player name is missing.", TXT_OK);
+		return(false);
+	}
+
+	NodeNameType *player = new NodeNameType;
+	if (player == NULL) {
+		WWMessageBox().Process("CnCNet Spawner: not enough memory for the player list.", TXT_OK);
+		return(false);
+	}
+	strncpy(player->Name, nameBuffer, sizeof(player->Name) - 1);
+	player->Name[sizeof(player->Name) - 1] = 0;
+	player->Player.House = (HousesType)spawnini.Get_Int("Settings", "Side", 0);
+	player->Player.Color = (PlayerColorType)spawnini.Get_Int("Settings", "Color", 0);
+	player->Player.ProcessTime = -1;
+	Session.ColorIdx = player->Player.Color;
+	Session.PrefColor = player->Player.Color;
+	Session.House = player->Player.House;
+	Session.Players.Add(player);
+
+	for (int playerIndex = 1; playerIndex < MAX_MPLAYER_COLORS; playerIndex++) {
+		char section[32];
+		char otherName[MPLAYER_NAME_MAX];
+		char ipBuffer[32];
+		sprintf(section, "Other%d", playerIndex);
+		otherName[0] = 0;
+		spawnini.Get_String(section, "Name", "", otherName, sizeof(otherName));
+		if (otherName[0] == 0) {
+			break;
+		}
+
+		ipBuffer[0] = 0;
+		spawnini.Get_String(section, "IP", "", ipBuffer, sizeof(ipBuffer));
+		unsigned long ipAddress = inet_addr(ipBuffer);
+		int otherPort = spawnini.Get_Int(section, "Port", 1234);
+		if (ipBuffer[0] == 0 || ipAddress == INADDR_NONE || otherPort <= 0 || otherPort > 65535) {
+			WWMessageBox().Process("CnCNet Spawner: a remote player's IP address or port is invalid.", TXT_OK);
+			return(false);
+		}
+
+		NodeNameType *other = new NodeNameType;
+		if (other == NULL) {
+			WWMessageBox().Process("CnCNet Spawner: not enough memory for the player list.", TXT_OK);
+			return(false);
+		}
+		strncpy(other->Name, otherName, sizeof(other->Name) - 1);
+		other->Name[sizeof(other->Name) - 1] = 0;
+		other->Player.House = (HousesType)spawnini.Get_Int(section, "Side", 0);
+		other->Player.Color = (PlayerColorType)spawnini.Get_Int(section, "Color", 0);
+		other->Player.ProcessTime = -1;
+
+		NetNumType networkNumber;
+		NetNodeType networkNode;
+		unsigned long portAddress = htonl((unsigned long)(otherPort & 0xFFFF));
+		memcpy(networkNumber, &portAddress, sizeof(networkNumber));
+		memset(networkNode, 0, sizeof(networkNode));
+		memcpy(networkNode, &ipAddress, sizeof(ipAddress));
+		other->Address.Set_Address(networkNumber, networkNode);
+		Session.Players.Add(other);
+		Session.Type = GAME_INTERNET;
+	}
+
+	int tunnelPort = spawnini.Get_Int("Tunnel", "Port", 0);
+	int localPort = spawnini.Get_Int("Settings", "Port", 1234);
+	if (localPort < 0 || localPort > 65535) {
+		localPort = 1234;
+	}
+	PlanetWestwoodPortNumber = (tunnelPort != 0) ? 0 : localPort;
+
+	if (spawnini.Get_Bool("Settings", "IsSinglePlayer", false)) {
+		Session.Type = GAME_NORMAL;
+	}
+
+	if (Session.Type == GAME_INTERNET) {
+#ifdef WINSOCK_IPX
+		if (PacketTransport != NULL) {
+			delete PacketTransport;
+			PacketTransport = NULL;
+		}
+		PacketTransport = new UDPInterfaceClass;
+		if (PacketTransport == NULL || !PacketTransport->Init() ||
+			!PacketTransport->Open_Socket(0) || !PacketTransport->Start_Listening()) {
+			if (PacketTransport != NULL) {
+				delete PacketTransport;
+				PacketTransport = NULL;
+			}
+			WWMessageBox().Process("CnCNet Spawner: could not initialize UDP networking.", TXT_OK);
+			return(false);
+		}
+		PacketTransport->Discard_In_Buffers();
+		PacketTransport->Discard_Out_Buffers();
+		Init_Network();
+		Session.MaxAhead = spawnini.Get_Int("Settings", "MaxAhead", 15);
+		Session.FrameSendRate = spawnini.Get_Int("Settings", "FrameSendRate", 3);
+		Ipx.Set_Timing(25, -1, 744);
+#else
+		WWMessageBox().Process("CnCNet Spawner: this build has no UDP networking support.", TXT_OK);
+		return(false);
+#endif
+	}
+
+	Init_Random();
+	Session.Messages.Init(
+		Map.TacPixelX, Map.TacPixelY,
+		6, MAX_MESSAGE_LENGTH - 14, 7 * RESFACTOR,
+		-1, -1, 0, 20, MAX_MESSAGE_LENGTH - 14,
+		Lepton_To_Pixel(Map.TacLeptonWidth));
+
+	if (spawnini.Get_Bool("Settings", "LoadSaveGame", false)) {
+		int saveGameNumber = spawnini.Get_Int("Settings", "SaveGameNumber", 1000);
+		if (!Load_Game(saveGameNumber)) {
+			WWMessageBox().Process("CnCNet Spawner: the requested save game could not be loaded.", TXT_OK);
+			return(false);
+		}
+	} else {
+		char scenarioName[128];
+		scenarioName[0] = 0;
+		spawnini.Get_String("Settings", "Scenario", "", scenarioName, sizeof(scenarioName));
+		if (scenarioName[0] == 0) {
+			WWMessageBox().Process("CnCNet Spawner: the scenario name is missing.", TXT_OK);
+			return(false);
+		}
+		strncpy(Scen.ScenarioName, scenarioName, sizeof(Scen.ScenarioName) - 1);
+		Scen.ScenarioName[sizeof(Scen.ScenarioName) - 1] = 0;
+		if (!Start_Scenario(Scen.ScenarioName, true)) {
+			return(false);
+		}
+	}
+
+	if (Session.Type == GAME_INTERNET && !Session.Create_Connections()) {
+		WWMessageBox().Process("CnCNet Spawner: player connections could not be created.", TXT_OK);
+		return(false);
+	}
+	Call_Back();
+	return(true);
 }
 
 
@@ -1857,6 +2107,14 @@ bool Parse_Command_Line(int argc, char * argv[])
 		}
 
 #endif
+
+		/*
+		**	Launched by the CnCNet Spawner.
+		*/
+		if (strstr(string, "-SPAWN")) {
+			LaunchedFromSpawner = true;
+			continue;
+		}
 
 		/*
 		**	File search path override.
