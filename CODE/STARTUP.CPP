@@ -38,6 +38,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include "diaglog.h"
 #include	<conio.h>
 #include	<io.h>
 
@@ -268,6 +269,20 @@ int main(int argc, char * argv[])
 		path[strlen(path)-1] = '\0';
 	}
 	chdir(path);
+
+	/*
+	** Start the diagnostic log only after switching to the executable's
+	** directory, so RA_DIAG.LOG is written next to RA95.EXE.
+	*/
+	RA_DiagLog_Initialize();
+	RA_DiagLog_InstallCrashHandler();
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Startup: executable=%s", argv[0]);
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Startup: previous working directory=%s", oldpath);
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Startup: executable drive=%s path=%s", drive, path);
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Startup: argc=%d", argc);
+	for (int logArg = 1; logArg < argc; logArg++) {
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Startup: argv[%d]=%s", logArg, argv[logArg]);
+	}
 
 #ifdef WOLAPI_INTEGRATION
 	//	Look for special wolapi install program, used after the patch to version 3, to install "Shared Internet Components".
@@ -905,6 +920,7 @@ void Print_Error_Exit(char * string)
  *=============================================================================================*/
 void Emergency_Exit ( int code )
 {
+	RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Emergency_Exit called with code=%d", code);
 
 #ifdef WIN32
 
