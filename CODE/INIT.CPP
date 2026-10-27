@@ -96,6 +96,13 @@ bool LaunchedFromSpawner = false;
 static bool SpawnerActive = false;
 static bool SpawnerSaveLoaded = false;
 
+/*
+** Keep the full Spawner scenario path separate from Scen.ScenarioName.
+** The original Spawner patch does this because the engine's scenario name
+** field is also used for legacy scenario metadata.
+*/
+static char SpawnerScenarioName[512];
+
 #include "WolDebug.h"
 
 #ifdef CHEAT_KEYS
@@ -1512,7 +1519,8 @@ bool Select_Game(bool fade)
 		}
 		Show_Mouse();
 //Mono_Printf("About to call Start Scenario with %s\n", Scen.ScenarioName);
-		if (!Start_Scenario(Scen.ScenarioName)) {
+		char *scenarioToLoad = LaunchedFromSpawner ? SpawnerScenarioName : Scen.ScenarioName;
+		if (!Start_Scenario(scenarioToLoad)) {
 			return(false);
 		}
 		if (Special.IsFromInstall) Show_Mouse();
@@ -1952,14 +1960,26 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		}
 		SpawnerSaveLoaded = true;
 	} else {
-		char scenarioName[128];
-		scenarioName[0] = 0;
-		spawnini.Get_String("Settings", "Scenario", "", scenarioName, sizeof(scenarioName));
-		if (scenarioName[0] == 0) {
+		SpawnerScenarioName[0] = 0;
+		spawnini.Get_String("Settings", "Scenario", "", SpawnerScenarioName, sizeof(SpawnerScenarioName));
+		if (SpawnerScenarioName[0] == 0) {
 			WWMessageBox().Process("CnCNet Spawner: the scenario name is missing.", TXT_OK);
 			return(false);
 		}
-		strncpy(Scen.ScenarioName, scenarioName, sizeof(Scen.ScenarioName) - 1);
+
+		/*
+		** Give a useful error if the configured path cannot be found before
+		** Start_Scenario reports the more generic "unable to read scenario".
+		*/
+		CCFileClass scenarioFile(SpawnerScenarioName);
+		if (!scenarioFile.Is_Available()) {
+			char message[640];
+			sprintf(message, "CnCNet Spawner: scenario file not found:\n%s", SpawnerScenarioName);
+			WWMessageBox().Process(message, TXT_OK);
+			return(false);
+		}
+
+		strncpy(Scen.ScenarioName, SpawnerScenarioName, sizeof(Scen.ScenarioName) - 1);
 		Scen.ScenarioName[sizeof(Scen.ScenarioName) - 1] = 0;
 	}
 
