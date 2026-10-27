@@ -53,6 +53,9 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include "diaglog.h"
+
+extern bool LaunchedFromSpawner;
 
 
 /***********************************************************************************************
@@ -438,6 +441,13 @@ bool FactoryClass::Start(void)
 
 			rate /= STEP_COUNT;
 			rate = Bound(rate, 1, 255);
+
+			if (LaunchedFromSpawner && Object) {
+				RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+					"Spawner factory START: house=%08lX product_rtti=%d counted_factories=%d build_time=%d rate=%d",
+					(unsigned long)House, (int)Object->What_Am_I(),
+					House->Factory_Count(Object->What_Am_I()), time, rate);
+			}
 
 			Set_Rate(rate);
 			IsSuspended = false;
