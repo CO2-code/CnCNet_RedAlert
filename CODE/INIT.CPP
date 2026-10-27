@@ -1782,8 +1782,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	}
 
 	Session.Type = GAME_SKIRMISH;
-	Session.CommProtocol = (CommProtocolType)spawnini.Get_Int(
-		"Settings", "NetworkVersionProtocol", 0);
+	Session.CommProtocol = COMM_PROTOCOL_MULTI_E_COMP;
 	Session.Options.ScenarioIndex = 0;
 	Session.Options.Bases = spawnini.Get_Bool("Settings", "Bases", true);
 	Session.Options.Credits = spawnini.Get_Int("Settings", "Credits", 10000);
@@ -1915,6 +1914,8 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	}
 
 	if (Session.Type == GAME_INTERNET) {
+		Session.CommProtocol = (CommProtocolType)spawnini.Get_Int(
+			"Settings", "NetworkVersionProtocol", 0);
 #ifdef WINSOCK_IPX
 		if (PacketTransport != NULL) {
 			delete PacketTransport;
