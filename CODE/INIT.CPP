@@ -1776,7 +1776,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	}
 
 	INIClass spawnini;
-	if (!spawnini.Load(spawnfile, false)) {
+	if (!spawnini.Load(spawnfile)) {
 		WWMessageBox().Process("CnCNet Spawner: SPAWN.INI could not be read.", TXT_OK);
 		return(false);
 	}
