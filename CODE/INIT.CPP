@@ -1783,7 +1783,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 
 	Session.Type = GAME_SKIRMISH;
 	Session.CommProtocol = (CommProtocolType)spawnini.Get_Int(
-		"Settings", "NetworkVersionProtocol", COMM_PROTOCOL_MULTI_E_COMP);
+		"Settings", "NetworkVersionProtocol", 0);
 	Session.Options.ScenarioIndex = 0;
 	Session.Options.Bases = spawnini.Get_Bool("Settings", "Bases", true);
 	Session.Options.Credits = spawnini.Get_Int("Settings", "Credits", 10000);
@@ -1849,7 +1849,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		WWMessageBox().Process("CnCNet Spawner: not enough memory for the player list.", TXT_OK);
 		return(false);
 	}
-	memset(player, 0, sizeof(*player));
+	memset(&player->Player, 0, sizeof(player->Player));
 	strncpy(player->Name, nameBuffer, sizeof(player->Name) - 1);
 	player->Name[sizeof(player->Name) - 1] = 0;
 	player->Player.House = (HousesType)spawnini.Get_Int("Settings", "Side", 0);
@@ -1885,7 +1885,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 			WWMessageBox().Process("CnCNet Spawner: not enough memory for the player list.", TXT_OK);
 			return(false);
 		}
-		memset(other, 0, sizeof(*other));
+		memset(&other->Player, 0, sizeof(other->Player));
 		strncpy(other->Name, otherName, sizeof(other->Name) - 1);
 		other->Name[sizeof(other->Name) - 1] = 0;
 		other->Player.House = (HousesType)spawnini.Get_Int(section, "Side", 0);
