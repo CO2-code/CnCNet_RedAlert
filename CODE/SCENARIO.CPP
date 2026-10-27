@@ -2116,7 +2116,13 @@ bool Read_Scenario_INI(char * fname, bool )
 	/*
 	** If the scenario digest is wrong then the return code will be a 2.
 	*/
-	if (result == 2) {
+	/*
+	** CnCNet Spawner can supply custom map paths that do not follow the
+	** legacy SCM## filename convention used by the checksum exception below.
+	** Don't reject those paths based on that filename heuristic. Actual file
+	** open/parse failures (result 0) are still rejected above.
+	*/
+	if (result == 2 && !LaunchedFromSpawner) {
 //		if (Session.Type == GAME_NORMAL || Session.ScenarioIsOfficial) {
 			/*
 			**	Make a special exception so that multiplayer maps from 1 through
