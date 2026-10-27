@@ -94,6 +94,7 @@ RemapControlType SidebarScheme;
 // Set by the -SPAWN command-line option.
 bool LaunchedFromSpawner = false;
 static bool SpawnerActive = false;
+static bool SpawnerSaveLoaded = false;
 
 #include "WolDebug.h"
 
@@ -570,14 +571,6 @@ bool Select_Game(bool fade)
 	Map.Set_Default_Mouse(MOUSE_NORMAL, false);
 
 	/*
-	**	A spawned match gets its options directly from SPAWN.INI; it does not
-	**	need the interactive main menu or multiplayer setup dialogs.
-	*/
-	if (LaunchedFromSpawner) {
-		return(Read_Spawner_Game_Options_And_Launch_Match());
-	}
-
-	/*
 	**	If the last game we played was a multiplayer game, jump right to that
 	**	menu by pre-setting 'selection'.
 	*/
@@ -625,6 +618,16 @@ bool Select_Game(bool fade)
 		}
 #endif	//WIN32
 #endif
+
+		if (LaunchedFromSpawner) {
+			if (!Read_Spawner_Game_Options_And_Launch_Match()) {
+				return(false);
+			}
+			process = false;
+			display = false;
+			selection = SEL_MULTIPLAYER_GAME;
+			Theme.Fade_Out();
+		}
 
 		while (process) {
 
@@ -1429,7 +1432,9 @@ bool Select_Game(bool fade)
 	/*
 	** Initialize the random number generator(s)
 	*/
-	Init_Random();
+	if (!SpawnerSaveLoaded) {
+		Init_Random();
+	}
 
 	/*
 	** Save initialization values if we're recording this game.
@@ -1443,7 +1448,8 @@ bool Select_Game(bool fade)
 	}
 
 #ifdef FIXIT_CSII	//	checked - ajw 9/28/98
-	switch(Session.Type) {
+	if (!LaunchedFromSpawner) {
+		switch(Session.Type) {
 		case GAME_MODEM:
 		case GAME_NULL_MODEM:
 		case GAME_IPX:
@@ -1473,6 +1479,7 @@ bool Select_Game(bool fade)
 			break;
 		default:
 			break;
+		}
 	}
 #endif
 	/*
@@ -1480,7 +1487,7 @@ bool Select_Game(bool fade)
 	**	don't specify a variation, to make 'Set_Scenario_Name()' pick a random one.
 	**	Skip this if we've already loaded a save-game.
 	*/
-	if (!gameloaded && !Session.LoadGame) {
+	if (!gameloaded && !Session.LoadGame && !SpawnerSaveLoaded) {
 //		if (Debug_Map) {
 //			Set_Scenario_Name(Scen.ScenarioName, Scen.Scenario, Scen.ScenPlayer, Scen.ScenDir, SCEN_VAR_A);
 //		}  else {
@@ -1551,7 +1558,7 @@ bool Select_Game(bool fade)
 	/*
 	** If this isnt an internet game that set the unit build rate to its default value
 	*/
-	if (Session.Type != GAME_INTERNET){
+	if (Session.Type != GAME_INTERNET && !LaunchedFromSpawner) {
 		UnitBuildPenalty = 100;
 	}
 
@@ -1842,6 +1849,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		WWMessageBox().Process("CnCNet Spawner: not enough memory for the player list.", TXT_OK);
 		return(false);
 	}
+	memset(player, 0, sizeof(*player));
 	strncpy(player->Name, nameBuffer, sizeof(player->Name) - 1);
 	player->Name[sizeof(player->Name) - 1] = 0;
 	player->Player.House = (HousesType)spawnini.Get_Int("Settings", "Side", 0);
@@ -1877,6 +1885,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 			WWMessageBox().Process("CnCNet Spawner: not enough memory for the player list.", TXT_OK);
 			return(false);
 		}
+		memset(other, 0, sizeof(*other));
 		strncpy(other->Name, otherName, sizeof(other->Name) - 1);
 		other->Name[sizeof(other->Name) - 1] = 0;
 		other->Player.House = (HousesType)spawnini.Get_Int(section, "Side", 0);
@@ -1933,19 +1942,14 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 #endif
 	}
 
-	Init_Random();
-	Session.Messages.Init(
-		Map.TacPixelX, Map.TacPixelY,
-		6, MAX_MESSAGE_LENGTH - 14, 7 * RESFACTOR,
-		-1, -1, 0, 20, MAX_MESSAGE_LENGTH - 14,
-		Lepton_To_Pixel(Map.TacLeptonWidth));
-
 	if (spawnini.Get_Bool("Settings", "LoadSaveGame", false)) {
 		int saveGameNumber = spawnini.Get_Int("Settings", "SaveGameNumber", 1000);
+		Init_Random();
 		if (!Load_Game(saveGameNumber)) {
 			WWMessageBox().Process("CnCNet Spawner: the requested save game could not be loaded.", TXT_OK);
 			return(false);
 		}
+		SpawnerSaveLoaded = true;
 	} else {
 		char scenarioName[128];
 		scenarioName[0] = 0;
@@ -1956,16 +1960,8 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		}
 		strncpy(Scen.ScenarioName, scenarioName, sizeof(Scen.ScenarioName) - 1);
 		Scen.ScenarioName[sizeof(Scen.ScenarioName) - 1] = 0;
-		if (!Start_Scenario(Scen.ScenarioName, true)) {
-			return(false);
-		}
 	}
 
-	if (Session.Type == GAME_INTERNET && !Session.Create_Connections()) {
-		WWMessageBox().Process("CnCNet Spawner: player connections could not be created.", TXT_OK);
-		return(false);
-	}
-	Call_Back();
 	return(true);
 }
 
