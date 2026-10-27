@@ -1,0 +1,104 @@
+name: Build RA95 test artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or tag to build"
+        required: true
+        default: "diagnostic/spawner-factory-speed"
+        type: string
+  push:
+    branches:
+      - "feature/**"
+      - "diagnostic/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ra95-test-build-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build English RA95
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    env:
+      DEPS_URL: https://downloads.cncnet.org/CnCNet_RedAlert_Build_Dependencies.zip
+      BUILD_REF: ${{ inputs.ref || github.ref_name }}
+
+    steps:
+      - name: Check out requested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Resolve build version
+        id: meta
+        shell: pwsh
+        run: |
+          $sha = (git rev-parse HEAD).Trim()
+          $short = (git rev-parse --short HEAD).Trim()
+          $branch = $env:BUILD_REF -replace '[^A-Za-z0-9._-]', '-'
+          "BUILD_SHA=$sha" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "BUILD_BRANCH=$branch" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "artifact=RA95-$branch-$short" >> $env:GITHUB_OUTPUT
+          Write-Host "Building ref '$env:BUILD_REF' at $sha"
+
+      - name: Download build dependencies
+        shell: pwsh
+        run: curl.exe -L --fail --retry 3 -o deps.zip "$env:DEPS_URL"
+
+      - name: Extract build dependencies
+        shell: pwsh
+        run: 7z x deps.zip "-o." -y
+
+      - name: Build game (English release, playtest, internal)
+        shell: cmd
+        run: |
+          subst X: /D >nul 2>&1
+          subst X: "%GITHUB_WORKSPACE%"
+          if errorlevel 1 exit /b 1
+          X:
+          cd \
+          set "BUILD_LANG=ENGLISH"
+          call MAKE.BAT
+          if errorlevel 1 exit /b 1
+
+      - name: Prepare downloadable build
+        shell: pwsh
+        run: |
+          $release = "RUN\ENGLISH\RA95.EXE"
+          if (-not (Test-Path $release)) {
+            throw "Build reported success, but $release was not produced."
+          }
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item $release "dist\RA95.EXE" -Force
+          @"
+          Red Alert test build
+          Source ref: $env:BUILD_REF
+          Commit: $env:BUILD_SHA
+          Workflow run: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID
+          "@ | Set-Content "dist\build-info.txt" -Encoding UTF8
+          Write-Host "Prepared dist\RA95.EXE"
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.artifact }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summarize build
+        if: success()
+        shell: pwsh
+        run: |
+          "### RA95 build uploaded" >> $env:GITHUB_STEP_SUMMARY
+          "- Source ref: `$env:BUILD_REF`" >> $env:GITHUB_STEP_SUMMARY
+          "- Commit: `$env:BUILD_SHA`" >> $env:GITHUB_STEP_SUMMARY
+          "- Artifact: `${{ steps.meta.outputs.artifact }}`" >> $env:GITHUB_STEP_SUMMARY
+          "- Contains `RA95.EXE` and `build-info.txt`; expires after 14 days." >> $env:GITHUB_STEP_SUMMARY
