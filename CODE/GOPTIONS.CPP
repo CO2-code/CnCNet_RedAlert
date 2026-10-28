@@ -520,6 +520,9 @@ void GameOptionsClass::Process(void)
 					} else {
 						if (Surrender_Dialog(TXT_CONFIRM_EXIT)) {
 							process = false;
+							if (PlayerPtr != NULL) {
+								Spawner_Note_Resigned((int)PlayerPtr->Class->House);
+							}
 							Queue_Exit();
 						} else {
 							display = true;

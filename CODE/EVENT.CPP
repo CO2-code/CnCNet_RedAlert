@@ -538,6 +538,7 @@ void EventClass::Execute(void)
 		**	Special self destruct action requested. This is active in the multiplayer mode.
 		*/
 		case DESTRUCT:
+			Spawner_Note_Resigned(ID);
 			Houses.Raw_Ptr(ID)->Flag_To_Die();
 			break;
 

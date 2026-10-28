@@ -2053,6 +2053,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 			return(false);
 		}
 		SpawnerSaveLoaded = true;
+		Spawner.LoadedSave = true;
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: save game loaded successfully");
 	} else {
 		SpawnerScenarioName[0] = 0;
@@ -2081,6 +2082,32 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		Scen.ScenarioName[sizeof(Scen.ScenarioName) - 1] = 0;
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: scenario file is available; stored scenario name='%s'", Scen.ScenarioName);
 	}
+
+#ifndef WWDEBUG
+	/*
+	**	Don't leave other players' IP addresses (or, for quick matches, their names) lying
+	**	around on disk once the match has been set up.
+	*/
+	{
+		spawnini.Put_String("Tunnel", "Ip", "");
+		for (int scrub = 1; scrub < MAX_MPLAYER_COLORS; scrub++) {
+			char section[32];
+			char scrubName[MPLAYER_NAME_MAX];
+			sprintf(section, "Other%d", scrub);
+			scrubName[0] = 0;
+			spawnini.Get_String(section, "Name", "", scrubName, sizeof(scrubName));
+			if (scrubName[0] == 0) {
+				break;
+			}
+			spawnini.Put_String(section, "Ip", "");
+			if (Spawner.QuickMatch) {
+				spawnini.Put_String(section, "Name", "");
+			}
+		}
+		RawFileClass spawnsave("SPAWN.INI");
+		spawnini.Save(spawnsave, true);
+	}
+#endif
 
 	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
 		"Spawner: options ready; sessionType=%d players=%d scenario='%s'",

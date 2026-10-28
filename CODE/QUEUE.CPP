@@ -3461,6 +3461,7 @@ static int Execute_DoList(int max_houses, HousesType base_house,
 							0x001f);
 						if (CRC[index] != DoList[j].Data.FrameInfo.CRC) {
 							Print_CRCs(&DoList[j]);
+							Spawner_Note_Out_Of_Sync();
 
 #if(TEN)
 							Send_TEN_Out_Of_Sync();

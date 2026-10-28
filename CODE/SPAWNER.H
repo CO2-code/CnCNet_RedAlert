@@ -94,6 +94,29 @@ struct SpawnerSettingsType {
 	**	Hash of the map as supplied by the launcher (reported in the statistics packet).
 	*/
 	char MapHash[SPAWNER_MAP_HASH_SIZE];
+
+	/*
+	**	Match results that the statistics packet reports per multiplayer slot (indexed from
+	**	HOUSE_MULTI1): who resigned, who lost their connection and the cell each house started in.
+	*/
+	bool Resigned[SPAWNER_SLOT_COUNT];
+	bool ConnectionLost[SPAWNER_SLOT_COUNT];
+	int StartCell[SPAWNER_SLOT_COUNT];
+
+	/*
+	**	True if this machine detected that the match went out of sync.
+	*/
+	bool OutOfSync;
+
+	/*
+	**	True once the statistics have been written for this match.
+	*/
+	bool StatsWritten;
+
+	/*
+	**	True if the match was resumed from a save game (no statistics are reported for those).
+	*/
+	bool LoadedSave;
 };
 
 extern SpawnerSettingsType Spawner;
@@ -108,6 +131,13 @@ void Spawner_Ignore_Color(int color);
 bool Spawner_Is_Color_Ignored(int color);
 
 /*
+**	Chat. Messages from an ignored player are dropped, apart from a short list of quick call
+**	outs ("go", "ally", "base" ...) and unless the sender is out of the game, in which case
+**	everything from them is dropped.
+*/
+bool Spawner_Incoming_Message_Allowed(int color, char const * text);
+
+/*
 **	Houses. 'house' parameters are HousesType values.
 */
 void Spawner_Apply_House_Overrides(void);
@@ -115,6 +145,20 @@ bool Spawner_Is_Spectator(int house);
 int Spawner_Spectator_Count(void);
 int Spawner_Get_Spawn_Location(int house);
 bool Spawner_Skip_Scenario_Object_House(int house);
+
+/*
+**	Statistics. The CnCNet ladder reads the statistics packet that the game would normally send
+**	to the Westwood servers from STATS.DMP.
+*/
+bool Spawner_Track_Stats(void);
+void Spawner_Note_Resigned(int house);
+void Spawner_Note_Connection_Lost(int house);
+void Spawner_Note_Out_Of_Sync(void);
+void Spawner_Note_Start_Cell(int house, int cell);
+int Spawner_Get_Start_Cell(int house);
+bool Spawner_Was_Resigned(int house);
+bool Spawner_Was_Connection_Lost(int house);
+bool Spawner_Write_Stats(void const * data, int length);
 
 /*
 **	Networking. The peer table maps a small token (1..SPAWNER_MAX_PEERS) -- which is what the

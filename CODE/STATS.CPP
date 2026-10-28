@@ -190,15 +190,32 @@ extern bool bReconnectDialogCancelled;
  *    5/29/96 12:38PM ST : Created                                                             *
  *=============================================================================================*/
 
+extern void Register_Game_End_Time(void);
+
 void Send_Statistics_Packet(void)
 {
 //	debugprint( "Stats: Send_Statistics_Packet() called.\n" );
 #ifndef INTERNET_OFF // Denzil 5/4/98
 
 #ifdef WOLAPI_INTEGRATION
-	if( !pWolapi )			//	Should no longer ever happen.
+	if( !pWolapi && !Spawner.Active )			//	Should no longer ever happen.
 		return;
 #endif
+
+	/*
+	**	CnCNet Spawner: the statistics are dumped to STATS.DMP for the CnCNet client instead of
+	**	being sent to the Westwood servers. Only one report is made per match, and none for
+	**	single player games or games that were loaded from a save.
+	*/
+	bool spawner = Spawner.Active;
+	if (spawner) {
+		if (Session.Type == GAME_NORMAL || Spawner.LoadedSave || Spawner.StatsWritten) {
+			return;
+		}
+		if (GameTimerInUse) {
+			Register_Game_End_Time();
+		}
+	}
 
 	PacketClass	stats;
 	HouseClass	*player;
@@ -230,6 +247,19 @@ void Send_Statistics_Packet(void)
 	static char field_player_crates_found[5]		= { "CRA?" };
 	static char field_player_harvested[5]			= { "HRV?" };
 
+	/*
+	**	Extra per player fields that the CnCNet ladder reads.
+	*/
+	static char field_player_allies[5]				= { "ALY?" };
+	static char field_player_connection_lost[5]	= { "CON?" };
+	static char field_player_resigned[5]			= { "RSG?" };
+	static char field_player_spawn[5]				= { "SPA?" };
+	static char field_player_dead[5]				= { "DED?" };
+	static char field_player_spectator[5]			= { "SPC?" };
+	static char field_out_of_sync[5]				= { "OOSY" };
+	static char field_my_id[5]						= { "MYID" };
+	static char field_map_hash[5]					= { "HASH" };
+
 	static char *houses[] = {
 		"SPA",
 		"GRE",
@@ -259,7 +289,11 @@ void Send_Statistics_Packet(void)
 		** Field to identify this as C&C 95 internet game statistics packet
 		*/
 #ifdef WOLAPI_INTEGRATION
-		if( pWolapi->bGameServer )
+		if( spawner )
+		{
+			//	The ladder reads this field as "the connection was lost".
+			stats.Add_Field( FIELD_HOSTORNOT, (unsigned long)(ConnectionLost ? 1 : 0) );
+		}else if( pWolapi->bGameServer )
 		{
 			stats.Add_Field( FIELD_HOSTORNOT, (unsigned char)0 );		//	Reversed meaning of this for Neal.
 		}else{
@@ -281,7 +315,11 @@ void Send_Statistics_Packet(void)
 #ifdef WOLAPI_INTEGRATION
 
 		//	Number of players initially in game.
-		stats.Add_Field( FIELD_NUM_INITIAL_PLAYERS, (unsigned long)pWolapi->GameInfoCurrent.iPlayerCount );
+		if (spawner) {
+			stats.Add_Field( FIELD_NUM_INITIAL_PLAYERS, (unsigned long)Session.Players.Count() );
+		} else {
+			stats.Add_Field( FIELD_NUM_INITIAL_PLAYERS, (unsigned long)pWolapi->GameInfoCurrent.iPlayerCount );
+		}
 //debugprint( "Stats: number of initial players is %i\n", pWolapi->GameInfoCurrent.iPlayerCount );
 
 		//	Number of players remaining in game. Not sure of what use this will be statistically...
@@ -289,7 +327,7 @@ void Send_Statistics_Packet(void)
 //debugprint( "Stats: number of remaining players is %i\n", Session.Players.Count() );
 
 		//	Whether or not this was a tournament game.
-		stats.Add_Field( FIELD_TOURNAMENT, (unsigned char)( pWolapi->GameInfoCurrent.bTournament ? 1 : 0 ) );
+		stats.Add_Field( FIELD_TOURNAMENT, (unsigned char)( (!spawner && pWolapi->GameInfoCurrent.bTournament) ? 1 : 0 ) );
 
 //	ajw This is now in WOLAPI...
 //		//	A unique value that identifies the machine that the game was played on.
@@ -327,6 +365,16 @@ void Send_Statistics_Packet(void)
 		** Shadow regrowth enabled
 		*/
 		stats.Add_Field(FIELD_SHADOW_REGROWS, Special.IsShadowGrow ? "ON" : "OFF" );
+
+		if (spawner) {
+			/*
+			** Whether this machine saw the match go out of sync, who we are and which map was
+			** played.
+			*/
+			stats.Add_Field(field_out_of_sync, (unsigned long)(Spawner.OutOfSync ? 1 : 0));
+			stats.Add_Field(field_my_id, (unsigned long)((PlayerPtr != NULL) ? (PlayerPtr->Class->House - HOUSE_MULTI1) : 0));
+			stats.Add_Field(field_map_hash, (char *)Spawner.MapHash);
+		}
 
 		/*
 		** Capture the flag mode (On/Off)
@@ -367,7 +415,7 @@ void Send_Statistics_Packet(void)
 
 #ifdef WOLAPI_INTEGRATION
 		//	Completion status is set for Tournament games only - ajw.
-		if( pWolapi->GameInfoCurrent.bTournament )
+		if( !spawner && pWolapi->GameInfoCurrent.bTournament )
 		{
 #endif
 
@@ -678,7 +726,14 @@ void Send_Statistics_Packet(void)
 			** Player color
 			*/
 			field_player_color[3] = '1' + (char)house;
-			stats.Add_Field (field_player_color, (unsigned char) (player->Class->House - HOUSE_MULTI1));
+			if (spawner) {
+				/*
+				** The Spawner can override the colour of a house, so report the one in use.
+				*/
+				stats.Add_Field (field_player_color, (unsigned char) player->RemapColor);
+			} else {
+				stats.Add_Field (field_player_color, (unsigned char) (player->Class->House - HOUSE_MULTI1));
+			}
 
 			/*
 			** Player end credits.
@@ -827,6 +882,24 @@ void Send_Statistics_Packet(void)
 			field_player_harvested[3] = '1' + (char)house;
 			stats.Add_Field (field_player_harvested, (unsigned long) player->HarvestedCredits);
 
+			if (spawner) {
+				HousesType housetype = player->Class->House;
+
+				field_player_allies[3] = '1' + (char)house;
+				field_player_connection_lost[3] = '1' + (char)house;
+				field_player_resigned[3] = '1' + (char)house;
+				field_player_spawn[3] = '1' + (char)house;
+				field_player_dead[3] = '1' + (char)house;
+				field_player_spectator[3] = '1' + (char)house;
+
+				stats.Add_Field (field_player_allies, (unsigned long) player->Allies);
+				stats.Add_Field (field_player_connection_lost, (unsigned long) (Spawner_Was_Connection_Lost(housetype) ? 1 : 0));
+				stats.Add_Field (field_player_resigned, (unsigned long) (Spawner_Was_Resigned(housetype) ? 1 : 0));
+				stats.Add_Field (field_player_spawn, (unsigned long) Spawner_Get_Start_Cell(housetype));
+				stats.Add_Field (field_player_dead, (unsigned long) (player->IsDefeated ? 1 : 0));
+				stats.Add_Field (field_player_spectator, (unsigned long) (Spawner_Is_Spectator(housetype) ? 1 : 0));
+			}
+
 		}
 
 		/*
@@ -852,6 +925,16 @@ void Send_Statistics_Packet(void)
 		*/
 		packet = PacketLater;
 		PacketLater = NULL;
+	}
+
+	/*
+	** CnCNet Spawner: hand the packet to the CnCNet client through STATS.DMP.
+	*/
+	if (spawner) {
+		Spawner_Write_Stats(packet, packet_size);
+		delete [] packet;
+		GameStatisticsPacketSent = true;
+		return;
 	}
 
 	/*

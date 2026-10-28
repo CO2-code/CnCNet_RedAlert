@@ -1746,6 +1746,13 @@ void IPX_Call_Back(void)
 							}
 						}
 
+						/*
+						** CnCNet Spawner: drop chat from ignored players.
+						*/
+						if (msg_ok && !Spawner_Incoming_Message_Allowed(Session.GPacket.Message.Color, Session.GPacket.Message.Buf)) {
+							msg_ok = false;
+						}
+
 						if (msg_ok) {
 							if (!Session.Messages.Concat_Message(Session.GPacket.Name,
 								Session.GPacket.Message.Color,

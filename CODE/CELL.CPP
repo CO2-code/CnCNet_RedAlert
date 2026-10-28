@@ -2298,7 +2298,7 @@ bool CellClass::Goodie_Check(FootClass * object)
 		/*
 		** Keep track of the number of each type of crate found
 		*/
-		if (Session.Type == GAME_INTERNET) {
+		if (Spawner_Track_Stats()) {
 			object->House->TotalCrates->Increment_Unit_Total(powerup);
 		}
 

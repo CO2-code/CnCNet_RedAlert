@@ -673,7 +673,7 @@ HouseClass::HouseClass(HousesType house) :
 	*/
 	Attack = Rule.AttackDelay * Random_Pick(TICKS_PER_MINUTE/2, TICKS_PER_MINUTE*2);
 
-	if (Session.Type == GAME_INTERNET) {
+	if (Spawner_Track_Stats()) {
 		AircraftTotals = new UnitTrackerClass( (int) AIRCRAFT_COUNT);
 		InfantryTotals = new UnitTrackerClass( (int) INFANTRY_COUNT);
 		UnitTotals = new UnitTrackerClass ( (int) UNIT_COUNT);
@@ -710,7 +710,7 @@ HouseClass::~HouseClass (void)
 {
 	Class = 0;
 
-	if (Session.Type == GAME_INTERNET) {
+	if (Spawner_Track_Stats()) {
 		delete AircraftTotals;
 		delete InfantryTotals;
 		delete UnitTotals;
@@ -6425,7 +6425,7 @@ void HouseClass::Tracking_Add(TechnoClass const * techno)
 			building = ((BuildingTypeClass const &)techno->Class_Of()).Type;
 			BQuantity[building]++;
 			BScan |= (1L << building);
-			if (Session.Type == GAME_INTERNET) {
+			if (Spawner_Track_Stats()) {
 				BuildingTotals->Increment_Unit_Total(techno->Class_Of().ID);
 			}
 			break;
@@ -6435,7 +6435,7 @@ void HouseClass::Tracking_Add(TechnoClass const * techno)
 			aircraft = ((AircraftTypeClass const &)techno->Class_Of()).Type;
 			AQuantity[aircraft]++;
 			AScan |= (1L << aircraft);
-			if (Session.Type == GAME_INTERNET) {
+			if (Spawner_Track_Stats()) {
 				AircraftTotals->Increment_Unit_Total(techno->Class_Of().ID);
 			}
 			break;
@@ -6451,7 +6451,7 @@ void HouseClass::Tracking_Add(TechnoClass const * techno)
 #else
 				IQuantity[infantry]++;
 #endif
-				if (!((InfantryTypeClass const &)techno->Class_Of()).IsCivilian && Session.Type == GAME_INTERNET) {
+				if (!((InfantryTypeClass const &)techno->Class_Of()).IsCivilian && Spawner_Track_Stats()) {
 					InfantryTotals->Increment_Unit_Total(techno->Class_Of().ID);
 				}
 				IScan |= (1L << infantry);
@@ -6469,7 +6469,7 @@ void HouseClass::Tracking_Add(TechnoClass const * techno)
 			UQuantity[unit]++;
 #endif
 			UScan |= (1L << unit);
-			if (Session.Type == GAME_INTERNET) {
+			if (Spawner_Track_Stats()) {
 				UnitTotals->Increment_Unit_Total(techno->Class_Of().ID);
 			}
 			break;
@@ -6485,7 +6485,7 @@ void HouseClass::Tracking_Add(TechnoClass const * techno)
 			VQuantity[vessel]++;
 #endif
 			VScan |= (1L << vessel);
-			if (Session.Type == GAME_INTERNET) {
+			if (Spawner_Track_Stats()) {
 				VesselTotals->Increment_Unit_Total(techno->Class_Of().ID);
 			}
 			break;

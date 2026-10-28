@@ -114,6 +114,7 @@ void Spawner_Reset(void)
 {
 	memset(&Spawner, 0, sizeof(Spawner));
 	for (int slot = 0; slot < SPAWNER_SLOT_COUNT; slot++) {
+		Spawner.StartCell[slot] = -1;
 		Spawner.HouseColor[slot] = SPAWNER_NOT_SET;
 		Spawner.HouseCountry[slot] = SPAWNER_NOT_SET;
 		Spawner.HouseHandicap[slot] = SPAWNER_NOT_SET;
@@ -213,6 +214,62 @@ bool Spawner_Is_Color_Ignored(int color)
 		return(false);
 	}
 	return(Spawner.IgnoredColor[color]);
+}
+
+
+/***********************************************************************************************
+ * Spawner_Incoming_Message_Allowed -- Should a chat message be shown?                         *
+ *                                                                                             *
+ * INPUT:   color -- The sender's colour as carried in the message.                            *
+ *          text  -- The message text.                                                         *
+ *                                                                                             *
+ * OUTPUT:  true if the message should be displayed.                                           *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+bool Spawner_Incoming_Message_Allowed(int color, char const * text)
+{
+	static char const * const whitelist[] = {
+		"f ", "b ", "fb ", "fb? ", "front ", "back ", "base ", "home ", "help ", "chinook ", "cy ",
+		"nook ", "heli ", "south ", "north ", "east ", "west ", "bottom ", "top ", "left ", "right ",
+		"ally ", "a ", "yellow ", "blue ", "red ", "green ", "orange ", "grey ", "gray ", "teal ", "brown ",
+		"go ", "gogo ", "attack ", "ally me ", "go south ", "go north ", "i tank ", "i build ", "you tank ",
+		"you build ", "make tanks ", "make helis ", "tank ", "build ", "ref ", "refinery ", "ore ", "ore space ",
+		"ref space ", "space ", "make depot ", "depot ", "v2 ", "make v2 ", "make cy ", "take cy ", "take depot ",
+		"repair ", "engi ", "use engi ", "send cy ", "need cy ", "wait ", "spec ", "specs ", "n ", "s ", "apc ",
+		"transport ", "make boats ", "boats ", "cruisers ", "gg ", NULL
+	};
+
+	if (!Spawner_Is_Color_Ignored(color)) {
+		return(true);
+	}
+
+	/*
+	**	Everything from an ignored player who is no longer playing is dropped.
+	*/
+	for (int slot = 0; slot < SPAWNER_SLOT_COUNT; slot++) {
+		HouseClass * hptr = HouseClass::As_Pointer((HousesType)(HOUSE_MULTI1 + slot));
+		if (hptr != NULL && hptr->IsHuman && (int)hptr->RemapColor == color) {
+			if (hptr->IsDefeated || Spawner.Spectator[slot]) {
+				return(false);
+			}
+			break;
+		}
+	}
+
+	char const * body = text;
+	if (strncmp(text, "(Allies):", 9) == 0) {
+		body += 9;
+	}
+	for (int index = 0; whitelist[index] != NULL; index++) {
+		if (stricmp(body, whitelist[index]) == 0) {
+			return(true);
+		}
+	}
+	return(false);
 }
 
 
@@ -360,6 +417,123 @@ bool Spawner_Skip_Scenario_Object_House(int house)
 	}
 	HouseClass * hptr = HouseClass::As_Pointer((HousesType)house);
 	return(hptr != NULL && hptr->IsDefeated);
+}
+
+
+/***********************************************************************************************
+ * Spawner_Track_Stats -- Should unit statistics be collected for this match?                  *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  true if the per-house unit trackers are in use.                                    *
+ *                                                                                             *
+ * WARNINGS:   Valid once the session type has been set up.                                    *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+bool Spawner_Track_Stats(void)
+{
+	if (Session.Type == GAME_INTERNET) {
+		return(true);
+	}
+	return(Spawner.Active && Session.Type != GAME_NORMAL);
+}
+
+
+static int Slot_Of(int house)
+{
+	int slot = house - (int)HOUSE_MULTI1;
+	if (slot < 0 || slot >= SPAWNER_SLOT_COUNT) {
+		return(-1);
+	}
+	return(slot);
+}
+
+
+void Spawner_Note_Resigned(int house)
+{
+	int slot = Slot_Of(house);
+	if (Spawner.Active && slot != -1) {
+		Spawner.Resigned[slot] = true;
+	}
+}
+
+
+void Spawner_Note_Connection_Lost(int house)
+{
+	int slot = Slot_Of(house);
+	if (Spawner.Active && slot != -1) {
+		Spawner.ConnectionLost[slot] = true;
+	}
+}
+
+
+void Spawner_Note_Out_Of_Sync(void)
+{
+	if (Spawner.Active) {
+		Spawner.OutOfSync = true;
+	}
+}
+
+
+void Spawner_Note_Start_Cell(int house, int cell)
+{
+	int slot = Slot_Of(house);
+	if (Spawner.Active && slot != -1) {
+		Spawner.StartCell[slot] = cell;
+	}
+}
+
+
+int Spawner_Get_Start_Cell(int house)
+{
+	int slot = Slot_Of(house);
+	return(slot == -1 ? -1 : Spawner.StartCell[slot]);
+}
+
+
+bool Spawner_Was_Resigned(int house)
+{
+	int slot = Slot_Of(house);
+	return(slot != -1 && Spawner.Resigned[slot]);
+}
+
+
+bool Spawner_Was_Connection_Lost(int house)
+{
+	int slot = Slot_Of(house);
+	return(slot != -1 && Spawner.ConnectionLost[slot]);
+}
+
+
+/***********************************************************************************************
+ * Spawner_Write_Stats -- Writes the statistics packet to STATS.DMP.                           *
+ *                                                                                             *
+ * INPUT:   data   -- The finished statistics packet.                                          *
+ *          length -- Its size in bytes.                                                       *
+ *                                                                                             *
+ * OUTPUT:  true if the file was written.                                                      *
+ *                                                                                             *
+ * WARNINGS:   Only the first call in a match writes anything.                                 *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+bool Spawner_Write_Stats(void const * data, int length)
+{
+	if (!Spawner.Active || Spawner.StatsWritten) {
+		return(false);
+	}
+	CCFileClass file("STATS.DMP");
+	if (!file.Open(WRITE)) {
+		RA_DiagLog_Write(RA_DIAG_LOG_WARN, "Spawner: cannot open STATS.DMP");
+		return(false);
+	}
+	file.Write(data, length);
+	file.Close();
+	Spawner.StatsWritten = true;
+	return(true);
 }
 
 

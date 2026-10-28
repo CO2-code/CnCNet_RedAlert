@@ -1175,6 +1175,10 @@ void Destroy_Connection(int id, int error)
 	if (!housep || !housep->IsHuman)
 		return;
 
+	if (error != 0) {
+		Spawner_Note_Connection_Lost(id);
+	}
+
 	//------------------------------------------------------------------------
 	//	Create a message to display to the user
 	//------------------------------------------------------------------------

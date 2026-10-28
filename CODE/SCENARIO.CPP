@@ -3132,6 +3132,7 @@ static void Create_Units(bool official)
 		**	Assign the center of this house to the waypoint location.
 		*/
 		hptr->Center = Cell_Coord(centroid);
+		Spawner_Note_Start_Cell(house, centroid);
 
 		/*
 		**	If Bases are ON, human & computer houses are treated differently
