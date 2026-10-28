@@ -486,6 +486,19 @@ extern	bool FastAMBuildSpeed;
 #endif	 //WIN32
 
 /*
+**	From HOUSE.CPP - true when the local player is a CnCNet Spawner observer.
+*/
+bool	Player_Is_Spectator(void);
+
+/*
+**	True when the local player may look inside an object: either a spy of ours is inside it,
+**	or we are observing the match, in which case we see everything a spy would reveal (the
+**	contents and production of factories, the enemy credits and the unit pips).
+*/
+#define PLAYER_CAN_SEE_INSIDE(spied_by) (Player_Is_Spectator() || (((spied_by) & (1 << (int)PlayerPtr->Class->House)) != 0))
+
+
+/*
 ** From SENDFILE.CPP - externs for scenario file transfers
 */
 bool Receive_Remote_File ( char *file_name, unsigned int file_length, unsigned int crc, int gametype);

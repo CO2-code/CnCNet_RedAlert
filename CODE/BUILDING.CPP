@@ -516,7 +516,7 @@ void BuildingClass::Draw_It(int x, int y, WindowNumberType window) const
 	/*
 	** If this is a factory that we're spying on, show what it's producing
 	*/
-	if (SpiedBy & (1<<(PlayerPtr->Class->House)) && IsSelected) {
+	if (PLAYER_CAN_SEE_INSIDE(SpiedBy) && IsSelected) {
 
 		/*
 		**	Fetch the factory that is associate with this building. For computer controlled buildings, the
@@ -5722,7 +5722,7 @@ void BuildingClass::Remove_Gap_Effect(void)
 
 short const * BuildingClass::Overlap_List(bool redraw) const
 {
-	if ((SpiedBy & (1 << PlayerPtr->Class->House)) != 0 && IsSelected && (*this == STRUCT_BARRACKS || *this == STRUCT_TENT)) {
+	if (PLAYER_CAN_SEE_INSIDE(SpiedBy) && IsSelected && (*this == STRUCT_BARRACKS || *this == STRUCT_TENT)) {
 		static short const _list[] = {
 			-1, 2, (MAP_CELL_W*1)-1, (MAP_CELL_W*1)+2, REFRESH_EOL
 		};

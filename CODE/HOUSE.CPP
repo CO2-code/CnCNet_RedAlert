@@ -6545,6 +6545,28 @@ void HouseClass::Become_Spectator(void)
 
 
 /***********************************************************************************************
+ * Player_Is_Spectator -- Is the local player only watching the match?                         *
+ *                                                                                             *
+ *    The CnCNet Spawner can put the local player in an observer slot. An observer sees        *
+ *    everything that a spy would reveal: the contents and production of every factory, the    *
+ *    enemy credits, the unit pips and the whole map.                                          *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  true if the local player is a spectator.                                           *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+bool Player_Is_Spectator(void)
+{
+	return(PlayerPtr != NULL && PlayerPtr->IsSpectator);
+}
+
+
+/***********************************************************************************************
  * HouseClass::Factory_Counter -- Fetches a pointer to the factory counter value.              *
  *                                                                                             *
  *    Use this routine to fetch a pointer to the variable that holds the number of factories   *

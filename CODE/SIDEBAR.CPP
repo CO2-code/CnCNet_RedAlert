@@ -790,9 +790,127 @@ void SidebarClass::Draw_It(bool complete)
 			Zoom.Draw_Me(true);
 		}
 	}
+	/*
+	**	An observer (CnCNet Spawner) has no production to look at, so the sidebar is used to
+	**	show the live statistics of every player instead.
+	*/
+	if (IsSidebarActive && (complete || IsToRedraw) && Player_Is_Spectator()) {
+		Draw_Live_Stats();
+	}
+
 	IsToRedraw = false;
 
 	BEnd(BENCH_SIDEBAR);
+}
+
+
+/***********************************************************************************************
+ * Tracker_Total -- Sums all entries of a unit tracker.                                        *
+ *                                                                                             *
+ * INPUT:   tracker  -- The tracker to sum, may be NULL.                                       *
+ *                                                                                             *
+ * OUTPUT:  The total number of objects ever recorded in the tracker.                          *
+ *=============================================================================================*/
+static long Tracker_Total(UnitTrackerClass * tracker)
+{
+	if (tracker == NULL) {
+		return(0);
+	}
+	long total = 0;
+	long const * values = tracker->Get_All_Totals();
+	int count = tracker->Get_Unit_Count();
+	for (int index = 0; index < count; index++) {
+		total += values[index];
+	}
+	return(total);
+}
+
+
+/***********************************************************************************************
+ * SidebarClass::Draw_Live_Stats -- Draws the observer's live statistics panel.                *
+ *                                                                                             *
+ *    This is the "live stats" display of the spawner spectator patch: one line per human      *
+ *    player with the number of units, infantry, buildings and aircraft the player owns, and   *
+ *    a second block with the same totals for the enemy objects the player destroyed.          *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  none                                                                               *
+ *                                                                                             *
+ * WARNINGS:   Only draws when the local player is an observer.                                *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+void SidebarClass::Draw_Live_Stats(void)
+{
+	if (!Player_Is_Spectator() || LogicPage == NULL) {
+		return;
+	}
+
+	/*
+	**	The panel starts just below the top of the side strips (the observer builds nothing,
+	**	so they are empty) and uses the same row layout as the patched executable.
+	*/
+	int const row_height = 6 * RESFACTOR;
+	int const left = ((int)SIDE_X + 2) * RESFACTOR;
+	int const right = ((int)SIDE_X + (int)SIDE_WIDTH - 2) * RESFACTOR;
+	int y = ((int)COLUMN_ONE_Y - 2) * RESFACTOR;
+	int row = 0;
+
+	if (!LogicPage->Lock()) {
+		return;
+	}
+
+	Fancy_Text_Print("Units/Inf/Bld/Air Owned", left, y + (row_height * row),
+		&ColorRemaps[PCOLOR_GREY], TBLACK, TPF_TEXT|TPF_NOSHADOW);
+
+	int house;
+	for (house = 0; house < SPAWNER_SLOT_COUNT; house++) {
+		HouseClass * hptr = HouseClass::As_Pointer((HousesType)(HOUSE_MULTI1 + house));
+		if (hptr == NULL || !hptr->IsHuman || hptr->IsSpectator) {
+			continue;
+		}
+
+		PlayerColorType color = hptr->RemapColor;
+		if ((int)color < 0 || (int)color >= (int)PCOLOR_COUNT) {
+			color = PCOLOR_GREY;
+		}
+
+		row++;
+		Fancy_Text_Print((char const *)hptr->IniName, left, y + (row_height * row),
+			&ColorRemaps[color], TBLACK, TPF_TEXT|TPF_NOSHADOW);
+		Fancy_Text_Print(" %ld/%ld/%ld/%ld", right, y + (row_height * row),
+			&ColorRemaps[color], TBLACK, TPF_TEXT|TPF_NOSHADOW|TPF_RIGHT,
+			Tracker_Total(hptr->UnitTotals), Tracker_Total(hptr->InfantryTotals),
+			Tracker_Total(hptr->BuildingTotals), Tracker_Total(hptr->AircraftTotals));
+	}
+
+	row++;
+	Fancy_Text_Print("Units/Inf/Bld/Air Killed", left, y + (row_height * row),
+		&ColorRemaps[PCOLOR_GREY], TBLACK, TPF_TEXT|TPF_NOSHADOW);
+
+	for (house = 0; house < SPAWNER_SLOT_COUNT; house++) {
+		HouseClass * hptr = HouseClass::As_Pointer((HousesType)(HOUSE_MULTI1 + house));
+		if (hptr == NULL || !hptr->IsHuman || hptr->IsSpectator) {
+			continue;
+		}
+
+		PlayerColorType color = hptr->RemapColor;
+		if ((int)color < 0 || (int)color >= (int)PCOLOR_COUNT) {
+			color = PCOLOR_GREY;
+		}
+
+		row++;
+		Fancy_Text_Print((char const *)hptr->IniName, left, y + (row_height * row),
+			&ColorRemaps[color], TBLACK, TPF_TEXT|TPF_NOSHADOW);
+		Fancy_Text_Print(" %ld/%ld/%ld/%ld", right, y + (row_height * row),
+			&ColorRemaps[color], TBLACK, TPF_TEXT|TPF_NOSHADOW|TPF_RIGHT,
+			Tracker_Total(hptr->DestroyedUnits), Tracker_Total(hptr->DestroyedInfantry),
+			Tracker_Total(hptr->DestroyedBuildings), Tracker_Total(hptr->DestroyedAircraft));
+	}
+
+	LogicPage->Unlock();
 }
 
 

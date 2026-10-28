@@ -1214,7 +1214,7 @@ void TechnoClass::Draw_It(int x, int y, WindowNumberType window) const
 			// Lower left corner.
 			draw_window.Draw_Line(x-lx, y+ly, x-lx+dx, y+ly, WHITE);
 			draw_window.Draw_Line(x-lx, y+ly, x-lx, y+ly-dy, WHITE);
-			if (House->Is_Ally(PlayerPtr) || (SpiedBy & (1<<(PlayerPtr->Class->House)))) {
+			if (House->Is_Ally(PlayerPtr) || PLAYER_CAN_SEE_INSIDE(SpiedBy)) {
 				Draw_Pips((x-lx)+5, y+ly-3, window);
 			}
 		}
@@ -5610,7 +5610,7 @@ void TechnoClass::Draw_Pips(int x, int y, WindowNumberType window) const
 	** factory-producing item or whatever.
 	*/
 	if (What_Am_I() == RTTI_BUILDING) {
-		int spiedby = SpiedBy & (1<<(PlayerPtr->Class->House));
+		int spiedby = PLAYER_CAN_SEE_INSIDE(SpiedBy) ? 1 : 0;
 
 		/*
 		** If it's an ore refinery or other such storage-capable building,

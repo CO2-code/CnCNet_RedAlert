@@ -2459,7 +2459,15 @@ void RadarClass::Draw_Names(void)
 	y = RadY + RadOffY+(2*RESFACTOR);
 
 	Fancy_Text_Print (TXT_NAME_COLON, RadX + RadOffX, y, &ColorRemaps[PCOLOR_GREY], TBLACK, TPF_6PT_GRAD | TPF_NOSHADOW);
-	Fancy_Text_Print (TXT_KILLS_COLON, RadX + RadOffX + RadIWidth - 2, y, &ColorRemaps[PCOLOR_GREY], TBLACK, TPF_RIGHT | TPF_6PT_GRAD | TPF_NOSHADOW);
+	/*
+	**	An observer cannot use a kill count, so the right hand column shows every player's
+	**	available money instead -- the patched executable does the same for spectators.
+	*/
+	if (Player_Is_Spectator()) {
+		Fancy_Text_Print ("Credits:", RadX + RadOffX + RadIWidth - 2, y, &ColorRemaps[PCOLOR_GREY], TBLACK, TPF_RIGHT | TPF_6PT_GRAD | TPF_NOSHADOW);
+	} else {
+		Fancy_Text_Print (TXT_KILLS_COLON, RadX + RadOffX + RadIWidth - 2, y, &ColorRemaps[PCOLOR_GREY], TBLACK, TPF_RIGHT | TPF_6PT_GRAD | TPF_NOSHADOW);
+	}
 	y += 6*RESFACTOR+1;
 
 	LogicPage->Draw_Line(RadX + RadOffX, y, RadX + RadOffX + RadIWidth - 1, y, LTGREY);
@@ -2515,7 +2523,11 @@ void RadarClass::Draw_Names(void)
 			kills += ptr->UnitsKilled[h];
 			kills += ptr->BuildingsKilled[h];
 		}
-		sprintf(txt, "%2d", kills);
+		if (Player_Is_Spectator()) {
+			sprintf(txt, "$%ld", ptr->Available_Money());
+		} else {
+			sprintf(txt, "%2d", kills);
+		}
 		Fancy_Text_Print (txt, RadX + RadOffX + RadIWidth - 2, y, color, TBLACK, style | TPF_RIGHT);
 
 		y += 6*RESFACTOR+1;
