@@ -73,8 +73,24 @@ jobs:
           X:
           cd \
           set "BUILD_LANG=ENGLISH"
-          call MAKE.BAT
-          if errorlevel 1 exit /b 1
+          call MAKE.BAT > "%GITHUB_WORKSPACE%\build.log" 2>&1
+          set "BUILD_RC=%ERRORLEVEL%"
+          type "%GITHUB_WORKSPACE%\build.log"
+          exit /b %BUILD_RC%
+
+      - name: Report compiler errors
+        if: failure()
+        shell: pwsh
+        run: |
+          if (Test-Path build.log) {
+            $errs = Select-String -Path build.log -Pattern 'Error!|Fatal|\*\*\* error|cannot open' | Select-Object -First 40
+            foreach ($e in $errs) {
+              $msg = ($e.Line -replace '[\r\n%]', ' ').Trim()
+              Write-Host "::error title=Build error::$msg"
+            }
+            $tail = (Get-Content build.log -Tail 15) -join ' | '
+            Write-Host "::error title=Build log tail::$($tail -replace '[\r\n%]', ' ')"
+          }
 
       - name: Prepare downloadable build
         shell: pwsh
