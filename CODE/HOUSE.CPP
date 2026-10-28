@@ -1413,7 +1413,7 @@ void HouseClass::Super_Weapon_Handler(void)
 	** Check to see if they have launched the GPS, but subsequently lost their
 	** tech center.  If so, remove the GPS, and shroud the map.
 	*/
-	if (IsGPSActive && !(ActiveBScan & STRUCTF_ADVANCED_TECH) && !Spawner_Is_Spectator(ID)) {
+	if (IsGPSActive && !(ActiveBScan & STRUCTF_ADVANCED_TECH) && !Spawner_Is_Spectator(Class->House)) {
 		IsGPSActive = false;
 		if (IsPlayerControl) {
 			Map.Shroud_The_Map();
