@@ -625,6 +625,11 @@ TheaterDataType const Theaters[THEATER_COUNT] = {
 	{"TEMPERATE","TEMPERAT","TEM"},
 	{"SNOW","SNOW","SNO"},
 	{"INTERIOR","INTERIOR","INT"},
+	{"WINTER","WINTER","WIN"},
+	{"DESERT","DESERT","DES"},
+	{"JUNGLE","JUNGLE","JUN"},
+	{"BARREN","BARREN","BAR"},
+	{"CAVE","CAVE","CAV"},
 };
 
 

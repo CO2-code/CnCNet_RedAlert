@@ -2351,6 +2351,12 @@ static void Stop_Game(void)
 	if (Session.Type == GAME_INTERNET){
 		ConnectionLost = true;
 		Send_Statistics_Packet();			//	Stop_Game()
+	} else if (Spawner_Track_Stats() && !GameStatisticsPacketSent) {
+		/*
+		**	CnCNet Spawner skirmish: still report whatever happened before the player left.
+		*/
+		Register_Game_End_Time();
+		Send_Statistics_Packet();
 	}
 #endif	//WIN32
 

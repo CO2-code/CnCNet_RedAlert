@@ -86,6 +86,8 @@ B<A> test;
 
 
 #include	"function.h"
+
+extern bool LaunchedFromSpawner;
 #include "diaglog.h"
 #ifdef WIN32
 #ifdef WINSOCK_IPX
@@ -2229,7 +2231,13 @@ Mono_Set_Cursor(0,0);
 			FrameTimer = framedelay;
 		}
 	} else {
-		if (Options.GameSpeed != 0) {
+		if (LaunchedFromSpawner) {
+			/*
+			**	CnCNet Spawner: the difficulty setting must not change the game speed. Every
+			**	match runs at the speed chosen in the options.
+			*/
+			FrameTimer = Options.GameSpeed;
+		} else if (Options.GameSpeed != 0) {
 			FrameTimer = Options.GameSpeed +
 				(PlayerPtr->Difficulty == DIFF_EASY ? 1 : 0) -
 				(PlayerPtr->Difficulty == DIFF_HARD ? 1 : 0);
@@ -2326,7 +2334,7 @@ Mono_Set_Cursor(0,0);
 		/*
 		** Send the game statistics to WChat.
 		*/
-		if (Session.Type == GAME_INTERNET && !GameStatisticsPacketSent) {
+		if ((Session.Type == GAME_INTERNET || Spawner_Track_Stats()) && !GameStatisticsPacketSent) {
 			Register_Game_End_Time();
 			Send_Statistics_Packet();		//	Player just won.
 		}
@@ -2345,7 +2353,7 @@ Mono_Set_Cursor(0,0);
 		/*
 		** Send the game statistics to WChat.
 		*/
-		if (Session.Type == GAME_INTERNET && !GameStatisticsPacketSent) {
+		if ((Session.Type == GAME_INTERNET || Spawner_Track_Stats()) && !GameStatisticsPacketSent) {
 			Register_Game_End_Time();
 			Send_Statistics_Packet();		//	Player just lost.
 		}
@@ -2376,7 +2384,7 @@ Mono_Set_Cursor(0,0);
 		Scen.bLocalProposesDraw && Scen.bOtherProposesDraw )
 	{
 		//	End game in a draw.
-		if (Session.Type == GAME_INTERNET && !GameStatisticsPacketSent) {
+		if ((Session.Type == GAME_INTERNET || Spawner_Track_Stats()) && !GameStatisticsPacketSent) {
 			Register_Game_End_Time();
 			Send_Statistics_Packet();
 		}

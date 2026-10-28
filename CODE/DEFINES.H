@@ -466,7 +466,7 @@ typedef enum DiffType {
 **	that the size specified is at least as large as the largest
 **	theater mixfile data block.
 */
-#define THEATER_BUFFER_SIZE	1100000L
+#define THEATER_BUFFER_SIZE	5500000L
 
 
 /**********************************************************************
@@ -2884,6 +2884,11 @@ typedef enum TheaterType {
 	THEATER_TEMPERATE,
 	THEATER_SNOW,
 	THEATER_INTERIOR,
+	THEATER_WINTER,
+	THEATER_DESERT,
+	THEATER_JUNGLE,
+	THEATER_BARREN,
+	THEATER_CAVE,
 
 	THEATER_COUNT,
 	THEATER_FIRST=0
@@ -2894,6 +2899,18 @@ inline TheaterType operator++(TheaterType &, int);
 #define	THEATERF_TEMPERATE		(1<<THEATER_TEMPERATE)
 #define	THEATERF_SNOW				(1<<THEATER_SNOW)
 #define	THEATERF_INTERIOR			(1<<THEATER_INTERIOR)
+#define	THEATERF_WINTER			(1<<THEATER_WINTER)
+#define	THEATERF_DESERT			(1<<THEATER_DESERT)
+#define	THEATERF_JUNGLE			(1<<THEATER_JUNGLE)
+#define	THEATERF_BARREN			(1<<THEATER_BARREN)
+#define	THEATERF_CAVE				(1<<THEATER_CAVE)
+
+/*
+**	The theaters after the original three (the CnCNet extra theaters) are not described by the
+**	theater masks in the type data. Everything is made available in them; objects that have no
+**	art for the theater simply find none.
+*/
+#define	THEATER_ALLOWS(mask, theater)	(((mask) & (1 << (theater))) || (theater) > THEATER_INTERIOR)
 
 typedef struct {
 	char		Name[16];

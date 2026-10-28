@@ -542,6 +542,7 @@ HouseClass::HouseClass(HousesType house) :
 	IsBuiltSomething(false),
 	IsResigner(false),
 	IsGiverUpper(false),
+	IsSpectator(false),
 	IsParanoid(false),
 	IsToLook(true),
 	DidRepair(false),
@@ -1251,7 +1252,20 @@ void HouseClass::AI(void)
 	**	If a radar facility is not present, but the radar is active, then turn the radar off.
 	**	The radar also is turned off when the power gets below 100% capacity.
 	*/
-	if (PlayerPtr == this) {
+	if (PlayerPtr == this && IsSpectator) {
+
+		/*
+		**	An observer always has a working radar, whether or not there is a radar facility.
+		*/
+		if (Map.Get_Jammed()) {
+			Map.Set_Jammed(false);
+			Map.RadarClass::Flag_To_Redraw(true);
+		}
+		if (!Map.Is_Radar_Active()) {
+			Map.Radar_Activate(1);
+		}
+
+	} else if (PlayerPtr == this) {
 		bool jammed = Map.Is_Radar_Active();
 
 		/*
@@ -6492,6 +6506,37 @@ void HouseClass::Tracking_Add(TechnoClass const * techno)
 
 		default:
 			break;
+	}
+}
+
+
+/***********************************************************************************************
+ * HouseClass::Become_Spectator -- Turns this house into an observer.                          *
+ *                                                                                             *
+ *    The CnCNet Spawner reserves a multiplayer house for each observer. The house is flagged  *
+ *    so that it owns no units, can't win or lose and is never counted as a player. If it      *
+ *    belongs to the local player, then the player sees the whole map and gets the radar.      *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  none                                                                               *
+ *                                                                                             *
+ * WARNINGS:   Call after PlayerPtr has been assigned.                                         *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+void HouseClass::Become_Spectator(void)
+{
+	IsSpectator = true;
+	IsDefeated = true;
+	IsStarted = false;
+	IsBaseBuilding = false;
+
+	if (PlayerPtr == this) {
+		Session.ObiWan = 1;
+		Debug_Unshroud = true;
+		Map.Flag_To_Redraw(true);
 	}
 }
 

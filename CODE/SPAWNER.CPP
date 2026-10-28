@@ -338,17 +338,8 @@ void Spawner_Apply_House_Overrides(void)
 		}
 
 		if (Spawner.Spectator[slot]) {
-			hptr->IsDefeated = true;
+			hptr->Become_Spectator();
 			SpectatorCount++;
-
-			/*
-			**	An observing local player gets the same view of the world as a player who has
-			**	just been defeated (see HouseClass::Flag_To_Die).
-			*/
-			if (hptr == PlayerPtr) {
-				Session.ObiWan = 1;
-				Debug_Unshroud = true;
-			}
 			RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: house slot %d is a spectator", slot + 1);
 		}
 	}

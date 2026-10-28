@@ -684,7 +684,7 @@ void TerrainTypeClass::Init(TheaterType theater)
 			*/
 			((void const *&)terrain.ImageData) = NULL;
 
-			if (terrain.Theater & (1 << theater)) {
+			if (THEATER_ALLOWS(terrain.Theater, theater)) {
 
 				/*
 				**	Load in the appropriate object shape data.
@@ -692,10 +692,12 @@ void TerrainTypeClass::Init(TheaterType theater)
 				_makepath(fullname, NULL, NULL, terrain.IniName, Theaters[theater].Suffix);
 				((void const *&)terrain.ImageData) = MFCD::Retrieve(fullname);
 
-				IsTheaterShape = true;	//Let Build_Frame know that this is a theater specific shape
-				if (terrain.RadarIcon != NULL) delete[] (char *)terrain.RadarIcon;
-				((void const *&)terrain.RadarIcon) = Get_Radar_Icon(terrain.Get_Image_Data(), 0, 1, 3);
-				IsTheaterShape = false;
+				if (terrain.ImageData != NULL) {
+					IsTheaterShape = true;	//Let Build_Frame know that this is a theater specific shape
+					if (terrain.RadarIcon != NULL) delete[] (char *)terrain.RadarIcon;
+					((void const *&)terrain.RadarIcon) = Get_Radar_Icon(terrain.Get_Image_Data(), 0, 1, 3);
+					IsTheaterShape = false;
+				}
 
 			}
 		}

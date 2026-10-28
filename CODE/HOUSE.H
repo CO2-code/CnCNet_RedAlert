@@ -284,6 +284,13 @@ class HouseClass {
 		unsigned IsGiverUpper:1;
 
 		/*
+		** Is this house an observer (set up by the CnCNet Spawner)? A spectator house owns
+		** nothing and takes no part in the game; its player just watches, with the whole map
+		** revealed and the radar always on.
+		*/
+		unsigned IsSpectator:1;
+
+		/*
 		**	If this computer controlled house has reason to be mad at humans,
 		**	then this flag will be true. Such a condition prevents alliances with
 		**	a human and encourages the computers players to ally amongst themselves.
@@ -672,6 +679,7 @@ class HouseClass {
 		void Production_Begun(TechnoClass const * rtti);
 		void Sell_Wall(CELL cell);
 		bool Flag_To_Die(void);
+		void Become_Spectator(void);
 		bool Flag_To_Win(void);
 		bool Flag_To_Lose(void);
 		void Make_Ally(HousesType house);

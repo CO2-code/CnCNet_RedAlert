@@ -89,6 +89,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include	"diaglog.h"
 #include	"vortex.h"
 
 /*
@@ -392,6 +393,9 @@ LastTheater = THEATER_NONE;
 
 		bool theaterload = TheaterData->Cache(TheaterBuffer);
 		assert(theaterload);
+		RA_DiagLog_Write(theaterload ? RA_DIAG_LOG_INFO : RA_DIAG_LOG_ERROR,
+			"Init_Theater: theater=%d mixfile='%s' cached=%d file_available=%d",
+			(int)theater, fullname, theaterload ? 1 : 0, CCFileClass(fullname).Is_Available() ? 1 : 0);
 //		LastTheater = Scen.Theater;
 	}
 
@@ -401,6 +405,16 @@ LastTheater = THEATER_NONE;
 	*/
 	sprintf(fullname, "%s.PAL", Theaters[theater].Root);
 	PaletteClass const * ptr = (PaletteClass *)MFCD::Retrieve(fullname);
+	if (ptr == NULL) {
+		/*
+		**	The theater's data is missing. Say so instead of crashing on a NULL palette.
+		*/
+		char message[160];
+		RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Init_Theater: palette '%s' not found (theater=%d)", fullname, (int)theater);
+		sprintf(message, "Theater data for %s was not found (%s.MIX / %s).", Theaters[theater].Name, Theaters[theater].Root, fullname);
+		WWMessageBox().Process(message, TXT_OK);
+		Emergency_Exit(EXIT_FAILURE);
+	}
 	GamePalette = * ptr;
 
 	OriginalPalette = GamePalette;

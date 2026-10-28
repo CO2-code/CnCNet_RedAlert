@@ -566,7 +566,7 @@ bool TerrainClass::Unlimbo(COORDINATE coord, DirType dir)
 	assert(Terrains.ID(this) == ID);
 	assert(IsActive);
 
-	if (Class->Theater & (1 << Scen.Theater)) {
+	if (THEATER_ALLOWS(Class->Theater, Scen.Theater)) {
 		return(ObjectClass::Unlimbo(coord, dir));
 	}
 	return(false);

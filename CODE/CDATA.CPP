@@ -3128,17 +3128,22 @@ void TemplateTypeClass::Init(TheaterType theater)
 		TemplateTypeClass	const & tplate = As_Reference(index);
 
 		((void const *&)tplate.ImageData) = NULL;
-		if (tplate.Theater & (1<<theater)) {
+		if (THEATER_ALLOWS(tplate.Theater, theater)) {
 			_makepath(fullname, NULL, NULL, tplate.IniName, Theaters[theater].Suffix);
 			ptr = MFCD::Retrieve(fullname);
 			((void const *&)tplate.ImageData) = ptr;
 
+			/*
+			**	The extra theaters don't have art for every template. Leave those alone.
+			*/
+			if (ptr != NULL) {
 #ifdef WIN32
-			Register_Icon_Set((void*)ptr, TRUE);		//Register icon set for video memory caching
+				Register_Icon_Set((void*)ptr, TRUE);		//Register icon set for video memory caching
 #endif
 
-			((unsigned char &)tplate.Width) = Get_IconSet_MapWidth(ptr);
-			((unsigned char &)tplate.Height) = Get_IconSet_MapHeight(ptr);
+				((unsigned char &)tplate.Width) = Get_IconSet_MapWidth(ptr);
+				((unsigned char &)tplate.Height) = Get_IconSet_MapHeight(ptr);
+			}
 		}
 	}
 }
