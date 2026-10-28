@@ -2759,6 +2759,12 @@ void Assign_Houses(void)
 			housep->IsDefeated = true;
 		}
 	}
+
+	/*
+	**	CnCNet Spawner: apply the per-slot colour, country, handicap and spectator
+	**	overrides from SPAWN.INI now that every house exists.
+	*/
+	Spawner_Apply_House_Overrides();
 }
 
 
@@ -2983,6 +2989,51 @@ static void Create_Units(bool official)
 	**	AI logic.)
 	*/
 	int numtaken = 0;
+
+	/*
+	**	CnCNet Spawner: some houses may have been told which waypoint to start at. Reserve
+	**	those waypoints now so that houses that are placed automatically stay clear of them.
+	**	The result is a waypoint index per house slot (-1 = pick automatically).
+	*/
+	int spawner_pick[MAX_PLAYERS];
+	for (i = 0; i < MAX_PLAYERS; i++) {
+		spawner_pick[i] = -1;
+	}
+	if (Spawner.Active) {
+		for (HousesType shouse = HOUSE_MULTI1; shouse < (HOUSE_MULTI1 + Session.MaxPlayers); shouse++) {
+			int slot = shouse - HOUSE_MULTI1;
+			int location = Spawner_Get_Spawn_Location(shouse);
+			if (slot >= MAX_PLAYERS || location < 0 || location >= WAYPT_COUNT || Scen.Waypoint[location] == -1) {
+				continue;
+			}
+			if (Spawner_Skip_Scenario_Object_House(shouse)) {
+				continue;
+			}
+
+			/*
+			**	Find the waypoint in the list built above, adding it if the scenario
+			**	designer put it beyond the waypoints considered so far.
+			*/
+			int found = -1;
+			for (j = 0; j < num_waypts; j++) {
+				if (waypts[j] == Scen.Waypoint[location]) {
+					found = j;
+					break;
+				}
+			}
+			if (found == -1 && num_waypts < ARRAY_SIZE(waypts)) {
+				found = num_waypts;
+				waypts[num_waypts] = Scen.Waypoint[location];
+				taken[num_waypts] = false;
+				num_waypts++;
+			}
+			if (found != -1) {
+				spawner_pick[slot] = found;
+				taken[found] = true;
+			}
+		}
+	}
+
 	for (HousesType house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + Session.MaxPlayers); house++) {
 
 		/*
@@ -2994,12 +3045,35 @@ static void Create_Units(bool official)
 		}
 
 		/*
+		**	CnCNet Spawner: observers and empty slots get no units.
+		*/
+		if (Spawner_Skip_Scenario_Object_House(house)) {
+			continue;
+		}
+
+		/*
 		**	Pick the starting location for this house. The first house just picks
 		**	one of the valid locations at random. The other houses pick the furthest
 		**	wapoint from the existing houses.
 		*/
-		if (numtaken == 0) {
+		int spawner_slot = house - HOUSE_MULTI1;
+		if (spawner_slot < MAX_PLAYERS && spawner_pick[spawner_slot] != -1) {
+
+			/*
+			**	CnCNet Spawner: this house was told where to start.
+			*/
+			centroid = waypts[spawner_pick[spawner_slot]];
+			numtaken++;
+		} else if (numtaken == 0) {
 			int pick = Random_Pick(0, num_waypts-1);
+			if (Spawner.Active) {
+				/*
+				**	Don't land on a waypoint that another house has asked for.
+				*/
+				for (int tries = 0; tries < num_waypts && taken[pick]; tries++) {
+					pick = (pick + 1) % num_waypts;
+				}
+			}
 			centroid = waypts[pick];
 			taken[pick] = true;
 			numtaken++;

@@ -1527,6 +1527,13 @@ bool Select_Game(bool fade)
 		if (!Start_Scenario(scenarioToLoad)) {
 			return(false);
 		}
+		if (LaunchedFromSpawner && Spawner.Active) {
+			/*
+			**	Everyone in the match must agree on the scenario, rules and executable; fold
+			**	them into the key that protects the match traffic.
+			*/
+			Spawner_Generate_Net_Key(scenarioToLoad, (unsigned int)((PlanetWestwoodGameID >> 16) & 0xFFFF));
+		}
 		if (Special.IsFromInstall) Show_Mouse();
 		Special.IsFromInstall = false;
 	}
@@ -1798,6 +1805,36 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	}
 	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: SPAWN.INI loaded successfully");
 
+	/*
+	**	Start from a clean slate and pick up the per-slot overrides (colours, countries,
+	**	handicaps, starting locations and spectators) plus the match identification.
+	*/
+	Spawner_Reset();
+	Spawner.Active = true;
+	Spawner_Read_Slot_Settings(spawnini);
+	Spawner.QuickMatch = spawnini.Get_Bool("Settings", "QuickMatch", false) ||
+		spawnini.Get_Int("Settings", "WOLGameID", 0) != 0;
+	spawnini.Get_String("Settings", "MapHash", "", Spawner.MapHash, sizeof(Spawner.MapHash));
+	if (Spawner.MapHash[0] == 0) {
+		spawnini.Get_String("Debug", "MapHash", "", Spawner.MapHash, sizeof(Spawner.MapHash));
+	}
+	PlanetWestwoodGameID = (unsigned long)spawnini.Get_Int("Settings", "GameID", 0);
+	Spawner_Set_Game_Id(PlanetWestwoodGameID);
+
+	/*
+	**	Tunnel server. When a tunnel port is given all traffic is relayed through the tunnel
+	**	and 'Settings/Port' is our id on it.
+	*/
+	{
+		char tunnelIp[32];
+		tunnelIp[0] = 0;
+		spawnini.Get_String("Tunnel", "IP", "", tunnelIp, sizeof(tunnelIp));
+		unsigned long tunnelAddress = (tunnelIp[0] != 0) ? inet_addr(tunnelIp) : 0;
+		int tunnelServerPort = spawnini.Get_Int("Tunnel", "Port", 0) & 0xFFFF;
+		int tunnelId = spawnini.Get_Int("Settings", "Port", 0) & 0xFFFF;
+		Spawner_Set_Tunnel(tunnelAddress, htons((unsigned short)tunnelServerPort), htons((unsigned short)tunnelId));
+	}
+
 	Session.Type = GAME_SKIRMISH;
 	Session.CommProtocol = COMM_PROTOCOL_MULTI_E_COMP;
 	Session.Options.ScenarioIndex = 0;
@@ -1881,6 +1918,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	Session.PrefColor = player->Player.Color;
 	Session.House = player->Player.House;
 	Session.Players.Add(player);
+	Spawner_Set_Player_Id((int)player->Player.Color);
 	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: local player='%s' side=%d color=%d",
 		player->Name, (int)player->Player.House, (int)player->Player.Color);
 
@@ -1897,9 +1935,21 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 
 		ipBuffer[0] = 0;
 		spawnini.Get_String(section, "IP", "", ipBuffer, sizeof(ipBuffer));
-		unsigned long ipAddress = inet_addr(ipBuffer);
 		int otherPort = spawnini.Get_Int(section, "Port", 1234);
-		if (ipBuffer[0] == 0 || ipAddress == INADDR_NONE || otherPort <= 0 || otherPort > 65535) {
+
+		/*
+		**	Through a tunnel the peer is identified by its tunnel id alone, so no IP address
+		**	is required. Otherwise a valid address is a must.
+		*/
+		unsigned long ipAddress = 0;
+		bool ipValid = true;
+		if (ipBuffer[0] != 0) {
+			ipAddress = inet_addr(ipBuffer);
+			ipValid = (ipAddress != INADDR_NONE);
+		} else if (!Spawner_Using_Tunnel()) {
+			ipValid = false;
+		}
+		if (!ipValid || otherPort <= 0 || otherPort > 65535) {
 			WWMessageBox().Process("CnCNet Spawner: a remote player's IP address or port is invalid.", TXT_OK);
 			return(false);
 		}
@@ -1916,13 +1966,27 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		other->Player.Color = (PlayerColorType)spawnini.Get_Int(section, "Color", 0);
 		other->Player.ProcessTime = -1;
 
+		/*
+		**	The game only ever sees a small token for the remote player; the real IP address
+		**	and port live in the Spawner's peer table (see Spawner_Send_Packet and
+		**	Spawner_Receive_Packet).
+		*/
+		int peerToken = Spawner_Add_Peer(ipAddress, htons((unsigned short)otherPort));
+		if (peerToken < 0) {
+			delete other;
+			WWMessageBox().Process("CnCNet Spawner: too many remote players.", TXT_OK);
+			return(false);
+		}
 		NetNumType networkNumber;
 		NetNodeType networkNode;
-		unsigned long portAddress = htonl((unsigned long)(otherPort & 0xFFFF));
-		memcpy(networkNumber, &portAddress, sizeof(networkNumber));
+		unsigned long tokenValue = (unsigned long)peerToken;
+		memset(networkNumber, 0, sizeof(networkNumber));
 		memset(networkNode, 0, sizeof(networkNode));
-		memcpy(networkNode, &ipAddress, sizeof(ipAddress));
+		memcpy(networkNode, &tokenValue, sizeof(tokenValue));
 		other->Address.Set_Address(networkNumber, networkNode);
+		if (spawnini.Get_Bool(section, "Ignored", false)) {
+			Spawner_Ignore_Color((int)other->Player.Color);
+		}
 		Session.Players.Add(other);
 		Session.Type = GAME_INTERNET;
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: remote player[%d]='%s' side=%d color=%d port=%d",

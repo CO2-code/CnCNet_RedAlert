@@ -340,6 +340,29 @@ long UDPInterfaceClass::Message_Handler(HWND, UINT message, UINT, LONG lParam)
 			/*
 			** Call the Winsock recvfrom function to get the outstanding packet.
 			*/
+			if (Spawner.Active) {
+				/*
+				** CnCNet Spawner match. The Spawner verifies and decodes the packet, discards
+				** anything that is not part of this match and maps the sender to the token the
+				** game knows the player by.
+				*/
+				unsigned char spawner_address[SPAWNER_ADDRESS_SIZE];
+				rc = Spawner_Receive_Packet(Socket, ReceiveBuffer, sizeof (ReceiveBuffer), spawner_address);
+				if (rc < 0) {
+					Clear_Socket_Error (Socket);
+					return (0);
+				}
+				if (rc > 0) {
+					packet = new WinsockBufferType;
+					packet->BufferLen = rc;
+					memcpy ( packet->Buffer, ReceiveBuffer, rc );
+					memset ( packet->Address, 0, sizeof (packet->Address) );
+					memcpy ( packet->Address, spawner_address, SPAWNER_ADDRESS_SIZE );
+					InBuffers.Add (packet);
+				}
+				return (0);
+			}
+
 			addr_len = sizeof(addr);
 			rc = recvfrom ( Socket, (char*)ReceiveBuffer, sizeof (ReceiveBuffer), 0, (LPSOCKADDR)&addr, &addr_len);
 			if (rc == SOCKET_ERROR) {
@@ -396,6 +419,21 @@ long UDPInterfaceClass::Message_Handler(HWND, UINT message, UINT, LONG lParam)
 			** Get a pointer to the packet.
 			*/
 			packet = OutBuffers [ packetnum ];
+
+			if (Spawner.Active) {
+				/*
+				** CnCNet Spawner match. The Spawner looks up the real destination, protects the
+				** packet and routes it directly or through the tunnel server.
+				*/
+				rc = Spawner_Send_Packet(Socket, packet->Address, packet->Buffer, packet->BufferLen);
+				if (rc < 0 && WSAGetLastError() == WSAEWOULDBLOCK) {
+					Clear_Socket_Error (Socket);
+					return (0);
+				}
+				OutBuffers.Delete ( packetnum );
+				delete packet;
+				return(0);
+			}
 
 			/*
 			** Set up the address structure of the outgoing packet

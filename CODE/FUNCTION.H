@@ -395,6 +395,7 @@ CELL Coord_Cell(COORDINATE coord);
 #include	"readline.h"
 #include	"vortex.h"
 #include "egos.h"
+#include	"spawner.h"			// CnCNet Spawner support
 #ifdef WIN32
 #include	"pcx.h"
 #endif
