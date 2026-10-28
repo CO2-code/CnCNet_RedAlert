@@ -259,7 +259,7 @@ bool Init_Game(int , char * [])
 	**	of processing the rules.ini file, but that is a bit beyond the capabilities of
 	**	the rule parser routine (currently).
 	*/
-	HouseTypes.Set_Heap(HOUSE_COUNT);
+	HouseTypes.Set_Heap(HOUSE_TYPE_COUNT);
 	BuildingTypes.Set_Heap(STRUCT_COUNT);
 	AircraftTypes.Set_Heap(AIRCRAFT_COUNT);
 	InfantryTypes.Set_Heap(INFANTRY_COUNT);

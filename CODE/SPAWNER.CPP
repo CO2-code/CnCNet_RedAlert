@@ -151,7 +151,7 @@ void Spawner_Read_Slot_Settings(INIClass const & ini)
 		}
 
 		int country = ini.Get_Int("HouseCountries", name, SPAWNER_NOT_SET);
-		if (country >= 0 && country < HOUSE_COUNT) {
+		if (country >= 0 && country < HOUSE_TYPE_COUNT) {
 			Spawner.HouseCountry[slot] = (unsigned char)country;
 		} else if (country != SPAWNER_NOT_SET) {
 			RA_DiagLog_Write(RA_DIAG_LOG_WARN, "Spawner: ignoring invalid HouseCountries %s=%d", name, country);
@@ -338,6 +338,8 @@ void Spawner_Apply_House_Overrides(void)
 		}
 
 		if (Spawner.Spectator[slot]) {
+			/* Give observers a distinct house type instead of borrowing a normal country. */
+			hptr->ActLike = HOUSE_SPECTATOR;
 			hptr->IsDefeated = true;
 			SpectatorCount++;
 
@@ -346,6 +348,7 @@ void Spawner_Apply_House_Overrides(void)
 			**	just been defeated (see HouseClass::Flag_To_Die).
 			*/
 			if (hptr == PlayerPtr) {
+				hptr->IsGPSActive = true;
 				Session.ObiWan = 1;
 				Debug_Unshroud = true;
 			}

@@ -1162,7 +1162,9 @@ typedef enum HousesType {
 	HOUSE_MULTI6,				// Multi-Player house #6
 	HOUSE_MULTI7,				// Multi-Player house #7
 	HOUSE_MULTI8,				// Multi-Player house #8
-	HOUSE_COUNT,
+	HOUSE_COUNT, // Number of legacy house/player slots; keep existing values stable.
+	HOUSE_SPECTATOR = HOUSE_COUNT, // Side type only; not a ninth multiplayer slot.
+	HOUSE_TYPE_COUNT, // Number of HouseTypeClass entries, including Spectator.
 	HOUSE_FIRST=0
 } HousesType;
 

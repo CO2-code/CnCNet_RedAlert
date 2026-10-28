@@ -571,3 +571,4 @@
 #define TXT_THEME_TRACTION       	552	// Traction
 #define TXT_THEME_WASTELND       	553	// Chaos
 #define TXT_CARRIER              	554	// H‚liport Mobile
+#define TXT_SPECTATOR            	555	// Spectator

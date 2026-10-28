@@ -392,6 +392,15 @@ void RadarClass::Draw_It(bool forced)
 		"uradrfrm.shp",	//HOUSE_BAD
 	};
 
+	/*
+	** Spectator has its own side ID but uses the standard allied radar artwork.
+	** The original artwork tables only contain entries for the ten built-in sides.
+	*/
+	HousesType radarhouse = PlayerPtr->ActLike;
+	if (radarhouse == HOUSE_SPECTATOR) {
+		radarhouse = HOUSE_SPAIN;
+	}
+
 	int radarforced = 0;
 
 	/*
@@ -408,7 +417,7 @@ void RadarClass::Draw_It(bool forced)
 
 //		strcpy(name, "NATORADR.SHP" );
 //		if (Session.Type == GAME_NORMAL) {
-			strcpy(name, _hiresradarnames[PlayerPtr->ActLike]);
+			strcpy(name, _hiresradarnames[radarhouse]);
 //		}
 		#ifndef NDEBUG
 			RawFileClass file(name);
@@ -424,12 +433,12 @@ void RadarClass::Draw_It(bool forced)
 			} else {
 				RadarPulse = MFCD::Retrieve(name);
 			}
-			strcpy(name, _frames[PlayerPtr->ActLike]);
+			strcpy(name, _frames[radarhouse]);
 			RawFileClass file3(name);
 			if (file3.Is_Available()) {
 				RadarFrame = Load_Alloc_Data(file3);
 			} else {
-				RadarFrame = MFCD::Retrieve(_frames[PlayerPtr->ActLike]);
+				RadarFrame = MFCD::Retrieve(_frames[radarhouse]);
 			}
 		#else
 			RadarAnim = MFCD::Retrieve(name);
@@ -440,7 +449,7 @@ void RadarClass::Draw_It(bool forced)
 			} else {
 				RadarPulse = MFCD::Retrieve(name);
 			}
-		RadarFrame = MFCD::Retrieve(_frames[PlayerPtr->ActLike]);
+		RadarFrame = MFCD::Retrieve(_frames[radarhouse]);
 		#endif
 		_house = PlayerPtr->ActLike;
 	}

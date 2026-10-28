@@ -1111,3 +1111,5 @@ Wasteland
 H‚litransporter
 # TXT_CARRIER
 
+Zuschauer
+# TXT_SPECTATOR

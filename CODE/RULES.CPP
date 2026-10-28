@@ -1009,7 +1009,7 @@ bool RulesClass::Objects(CCINIClass & ini)
 	/*
 	**	Fetch the house attribute override values.
 	*/
-	for (HousesType house = HOUSE_FIRST; house < HOUSE_COUNT; house++) {
+	for (HousesType house = HOUSE_FIRST; house < HOUSE_TYPE_COUNT; house++) {
 		HouseTypeClass::As_Reference(house).Read_INI(ini);
 	}
 
