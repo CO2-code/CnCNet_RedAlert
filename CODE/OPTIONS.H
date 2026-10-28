@@ -148,6 +148,19 @@ class OptionsClass {
 		KeyNumType KeyTeam9;
 		KeyNumType KeyTeam10;
 
+		/*
+		**	CnCNet Spawner additions (present in the patched 3.03 executable).
+		**	- KeySidebarToggle hides/shows the sidebar.
+		**	- KeyMapSnapshot writes a scenario snapshot of the current map.
+		**	- KeyQuickSave / KeyQuickLoad save and load to slot 999.
+		**	- KeyDebug re-shows the mouse cursor if it got lost.
+		*/
+		KeyNumType KeySidebarToggle;
+		KeyNumType KeyMapSnapshot;
+		KeyNumType KeyQuickSave;
+		KeyNumType KeyQuickLoad;
+		KeyNumType KeyDebug;
+
 		void Adjust_Palette(PaletteClass const & oldpal, PaletteClass & newpal, fixed brightness, fixed color, fixed tint, fixed contrast) const;
 	protected:
 

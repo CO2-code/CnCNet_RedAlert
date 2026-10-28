@@ -2514,6 +2514,31 @@ bool Read_Scenario_INI(char * fname, bool )
 
 
 /***********************************************************************************************
+ * Create_Map_Snapshot -- Writes the current map to MAPSNAP.MPR.                               *
+ *                                                                                             *
+ *    This is the map snapshot hotkey of the patched executable. It dumps the scenario exactly *
+ *    like the scenario editor does, so the file can be opened as a normal multiplayer map.    *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  none                                                                               *
+ *                                                                                             *
+ * WARNINGS:   The scenario writer is only built into debug (CHEAT_KEYS) builds, so the key    *
+ *             does nothing in a release build -- just like the original patch, which only     *
+ *             compiles the snapshot routine when WWDEBUG is defined.                          *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+void Create_Map_Snapshot(void)
+{
+#ifdef CHEAT_KEYS
+	Write_Scenario_INI("MAPSNAP.MPR");
+#endif
+}
+
+
+/***********************************************************************************************
  * Write_Scenario_INI -- Write the scenario INI file.                                          *
  *                                                                                             *
  * INPUT:                                                                                      *

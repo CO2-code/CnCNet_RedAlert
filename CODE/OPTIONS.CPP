@@ -157,7 +157,12 @@ OptionsClass::OptionsClass(void) :
 	KeyTeam7(KN_7),
 	KeyTeam8(KN_8),
 	KeyTeam9(KN_9),
-	KeyTeam10(KN_0)
+	KeyTeam10(KN_0),
+	KeySidebarToggle(KN_TAB),
+	KeyMapSnapshot(KN_NONE),
+	KeyQuickSave(KN_P),
+	KeyQuickLoad(KN_L),
+	KeyDebug(KN_I)
 {
 }
 
@@ -650,6 +655,11 @@ void OptionsClass::Load_Settings(void)
 	KeyTeam8 =  (KeyNumType)ini.Get_Int(HotkeyName, "KeyTeam8", KeyTeam8);
 	KeyTeam9 =  (KeyNumType)ini.Get_Int(HotkeyName, "KeyTeam9", KeyTeam9);
 	KeyTeam10 =  (KeyNumType)ini.Get_Int(HotkeyName, "KeyTeam10", KeyTeam10);
+	KeySidebarToggle = (KeyNumType)ini.Get_Int(HotkeyName, "KeySidebarToggle", KeySidebarToggle);
+	KeyMapSnapshot = (KeyNumType)ini.Get_Int(HotkeyName, "KeyMapSnapshot", KeyMapSnapshot);
+	KeyQuickSave = (KeyNumType)ini.Get_Int(HotkeyName, "KeyQuickSave", KeyQuickSave);
+	KeyQuickLoad = (KeyNumType)ini.Get_Int(HotkeyName, "KeyQuickLoad", KeyQuickLoad);
+	KeyDebug = (KeyNumType)ini.Get_Int(HotkeyName, "KeyDebug", KeyDebug);
 
 
 #ifdef WIN32
@@ -702,6 +712,11 @@ void OptionsClass::Load_Settings(void)
 	KeyTeam8 = (KeyNumType)(KeyTeam8 & ~WWKEY_VK_BIT);
 	KeyTeam9 = (KeyNumType)(KeyTeam9 & ~WWKEY_VK_BIT);
 	KeyTeam10 = (KeyNumType)(KeyTeam10 & ~WWKEY_VK_BIT);
+	KeySidebarToggle = (KeyNumType)(KeySidebarToggle & ~WWKEY_VK_BIT);
+	KeyMapSnapshot = (KeyNumType)(KeyMapSnapshot & ~WWKEY_VK_BIT);
+	KeyQuickSave = (KeyNumType)(KeyQuickSave & ~WWKEY_VK_BIT);
+	KeyQuickLoad = (KeyNumType)(KeyQuickLoad & ~WWKEY_VK_BIT);
+	KeyDebug = (KeyNumType)(KeyDebug & ~WWKEY_VK_BIT);
 #endif
 }
 
@@ -811,6 +826,11 @@ void OptionsClass::Save_Settings (void)
 	ini.Put_Int(HotkeyName, "KeyTeam8", KeyTeam8);
 	ini.Put_Int(HotkeyName, "KeyTeam9", KeyTeam9);
 	ini.Put_Int(HotkeyName, "KeyTeam10", KeyTeam10);
+	ini.Put_Int(HotkeyName, "KeySidebarToggle", KeySidebarToggle);
+	ini.Put_Int(HotkeyName, "KeyMapSnapshot", KeyMapSnapshot);
+	ini.Put_Int(HotkeyName, "KeyQuickSave", KeyQuickSave);
+	ini.Put_Int(HotkeyName, "KeyQuickLoad", KeyQuickLoad);
+	ini.Put_Int(HotkeyName, "KeyDebug", KeyDebug);
 
 	/*
 	**	Write the INI data out to a file.

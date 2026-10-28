@@ -529,6 +529,60 @@ void Main_Game(int argc, char * argv[])
 
 
 /***********************************************************************************************
+ * Quick_Save_Game -- Saves the current game to the quick save slot.                           *
+ *                                                                                             *
+ *    Bound to the KeyQuickSave hotkey (default 'P'), the same slot the patched executable     *
+ *    uses: SAVEGAME.999. Saving is only meaningful outside of a networked match.              *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  none                                                                               *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+#define QUICK_SAVE_ID 999
+
+static void Quick_Save_Game(void)
+{
+	if (Session.Type != GAME_NORMAL && Session.Type != GAME_SKIRMISH) {
+		return;
+	}
+	if (Save_Game(QUICK_SAVE_ID, "Quick Save")) {
+		Speak(VOX_SAVE1);
+	}
+}
+
+
+/***********************************************************************************************
+ * Quick_Load_Game -- Loads the game from the quick save slot.                                 *
+ *                                                                                             *
+ *    Bound to the KeyQuickLoad hotkey (default 'L').                                          *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  none                                                                               *
+ *                                                                                             *
+ * WARNINGS:   Loading a quick save in the middle of a network match would desynchronise the   *
+ *             players, so it is limited to single player and skirmish games.                  *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/28/2026 : Created.                                                                     *
+ *=============================================================================================*/
+static void Quick_Load_Game(void)
+{
+	if (Session.Type != GAME_NORMAL && Session.Type != GAME_SKIRMISH) {
+		return;
+	}
+	if (Load_Game(QUICK_SAVE_ID)) {
+		Speak(VOX_LOAD1);
+	}
+}
+
+
+/***********************************************************************************************
  * Keyboard_Process -- Processes the tactical map input codes.                                 *
  *                                                                                             *
  *    This routine is used to process the input codes while the player                         *
@@ -645,6 +699,51 @@ void Keyboard_Process(KeyNumType & input)
 	if (input & KN_ALT_BIT) action = 3;
 	if (input & KN_CTRL_BIT) action = 2;
 #endif
+
+	/*
+	**	The CnCNet Spawner compatible hotkeys. These are checked before the object selection
+	**	keys, in the same order as the patched executable does.
+	*/
+	if (key != 0 && key == Options.KeySidebarToggle && !Debug_Map) {
+		Map.SidebarClass::Activate(-1);
+		Map.Flag_To_Redraw(true);
+		input = KN_NONE;
+	}
+
+	if (key != 0 && key != KN_NONE && key == Options.KeyMapSnapshot) {
+		Create_Map_Snapshot();
+		input = KN_NONE;
+	}
+
+	if (key != 0 && key == Options.KeyQuickSave) {
+		Quick_Save_Game();
+		input = KN_NONE;
+	}
+
+	if (key != 0 && key == Options.KeyQuickLoad) {
+		Quick_Load_Game();
+		input = KN_NONE;
+	}
+
+	if (key != 0 && key == Options.KeyDebug) {
+		/*
+		**	Recover a mouse cursor that got lost by the overlay/page flips.
+		*/
+		Show_Mouse();
+		input = KN_NONE;
+	}
+
+	/*
+	**	Resign (surrender) hotkey. Multiplayer and skirmish games only: it asks for the same
+	**	confirmation as the resign button in the options dialog.
+	*/
+	if (input != 0 && input == Options.KeyResign && !Debug_Map) {
+		if (Session.Type != GAME_NORMAL && !PlayerLoses && PlayerPtr != NULL && !PlayerPtr->IsDefeated) {
+			Map.Help_Text(TXT_NONE);
+			SpecialDialog = SDLG_SURRENDER;
+		}
+		input = KN_NONE;
+	}
 
 	/*
 	**	If the "N" key is pressed, then select the next object.
@@ -790,19 +889,6 @@ void Keyboard_Process(KeyNumType & input)
 		input = KN_NONE;
 	}
 
-#ifdef TOFIX
-	/*
-	** For multiplayer, 'R' pops up the surrender dialog.
-	*/
-	if (input != 0 && input == Options.KeyResign) {
-		if (!PlayerLoses && /*Session.Type != GAME_NORMAL &&*/ !PlayerPtr->IsDefeated) {
-			SpecialDialog = SDLG_SURRENDER;
-			input = KN_NONE;
-		}
-		input = KN_NONE;
-	}
-#endif
-
 	/*
 	**	Handle making and breaking alliances.
 	*/
@@ -897,48 +983,47 @@ void Keyboard_Process(KeyNumType & input)
 	}
 
 	/*
-	**	Teams are handled by the 10 special team keys. The manual comparison
-	**	to the KN numbers is because the Windows keyboard driver can vary
-	**	the base code number for the key depending on the shift or alt key
-	**	state!
+	**	Teams are handled by the 10 special team keys. The keys are no longer hardcoded to the
+	**	digit row: the configured key is the only one that works, exactly like the patched
+	**	executable, so a player can move the team hotkeys off the digits.
 	*/
-	if (input != 0 && (plain == Options.KeyTeam1 || plain == KN_1)) {
+	if (input != 0 && (plain == Options.KeyTeam1)) {
 		Handle_Team(0, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam2 || plain == KN_2)) {
+	if (input != 0 && (plain == Options.KeyTeam2)) {
 		Handle_Team(1, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam3 || plain == KN_3)) {
+	if (input != 0 && (plain == Options.KeyTeam3)) {
 		Handle_Team(2, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam4 || plain == KN_4)) {
+	if (input != 0 && (plain == Options.KeyTeam4)) {
 		Handle_Team(3, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam5 || plain == KN_5)) {
+	if (input != 0 && (plain == Options.KeyTeam5)) {
 		Handle_Team(4, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam6 || plain == KN_6)) {
+	if (input != 0 && (plain == Options.KeyTeam6)) {
 		Handle_Team(5, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam7 || plain == KN_7)) {
+	if (input != 0 && (plain == Options.KeyTeam7)) {
 		Handle_Team(6, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam8 || plain == KN_8)) {
+	if (input != 0 && (plain == Options.KeyTeam8)) {
 		Handle_Team(7, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam9 || plain == KN_9)) {
+	if (input != 0 && (plain == Options.KeyTeam9)) {
 		Handle_Team(8, action);
 		input = KN_NONE;
 	}
-	if (input != 0 && (plain == Options.KeyTeam10 || plain == KN_0)) {
+	if (input != 0 && (plain == Options.KeyTeam10)) {
 		Handle_Team(9, action);
 		input = KN_NONE;
 	}
