@@ -2105,7 +2105,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 			}
 		}
 		RawFileClass spawnsave("SPAWN.INI");
-		spawnini.Save(spawnsave, true);
+		spawnini.Save(spawnsave);
 	}
 #endif
 

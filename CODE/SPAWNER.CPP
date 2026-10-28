@@ -260,12 +260,34 @@ bool Spawner_Incoming_Message_Allowed(int color, char const * text)
 		}
 	}
 
-	char const * body = text;
-	if (strncmp(text, "(Allies):", 9) == 0) {
-		body += 9;
+	/*
+	**	Ignore the "(Allies):" prefix and any spaces around the text so that "gg", " gg" and
+	**	"gg " are all the same call-out.
+	*/
+	char body[256];
+	char const * source = text;
+	if (strncmp(source, "(Allies):", 9) == 0) {
+		source += 9;
 	}
+	while (*source == ' ') {
+		source++;
+	}
+	strncpy(body, source, sizeof(body) - 1);
+	body[sizeof(body) - 1] = 0;
+	int length = strlen(body);
+	while (length > 0 && body[length - 1] == ' ') {
+		body[--length] = 0;
+	}
+
 	for (int index = 0; whitelist[index] != NULL; index++) {
-		if (stricmp(body, whitelist[index]) == 0) {
+		char entry[32];
+		strncpy(entry, whitelist[index], sizeof(entry) - 1);
+		entry[sizeof(entry) - 1] = 0;
+		int entry_length = strlen(entry);
+		while (entry_length > 0 && entry[entry_length - 1] == ' ') {
+			entry[--entry_length] = 0;
+		}
+		if (stricmp(body, entry) == 0) {
 			return(true);
 		}
 	}

@@ -524,7 +524,7 @@ void Send_Statistics_Packet(void)
 					else
 					{
 						completion = COMPLETION_CONNECTION_LOST;
-						if( pWolapi->bDisconnectPingingCompleted )
+						if( pWolapi && pWolapi->bDisconnectPingingCompleted )
 						{
 							char szPingResult[ 8 ];		//	Format is "x/y a/b", e.g., "3/5 4/5"
 							pWolapi->DisconnectPingResultsString( szPingResult );
@@ -931,9 +931,11 @@ void Send_Statistics_Packet(void)
 	** CnCNet Spawner: hand the packet to the CnCNet client through STATS.DMP.
 	*/
 	if (spawner) {
-		Spawner_Write_Stats(packet, packet_size);
+		bool written = Spawner_Write_Stats(packet, packet_size);
 		delete [] packet;
-		GameStatisticsPacketSent = true;
+		if (written) {
+			GameStatisticsPacketSent = true;
+		}
 		return;
 	}
 
