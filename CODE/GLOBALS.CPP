@@ -790,6 +790,15 @@ bool IsTheaterShape = false;	// must be defined only if not Win32
 GetCDClass		CDList;
 int UnitBuildPenalty = 100;
 
+/*
+**	The Aftermath expansion normally limits the multiple-factory production bonus of units.
+**	The original 3.03 executable exposes this as [Aftermath] AftermathFastBuildSpeed in
+**	RULES.INI, the CnCNet Spawner passes the same option in SPAWN.INI, and [Options]
+**	FastAMBuildSpeed turns it on for skirmish and single player games only.
+*/
+bool AftermathFastBuildSpeed = false;
+bool FastAMBuildSpeed = false;
+
 #ifdef MPEGMOVIE // Denzil 6/15/98
 #ifdef MCIMPEG
 #include "mcimovie.h"

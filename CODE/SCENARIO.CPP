@@ -2494,7 +2494,13 @@ bool Read_Scenario_INI(char * fname, bool )
 #ifdef FIXIT_CSII	//	checked - ajw 9/28/98 - Added runtime check.
 	if( Is_Aftermath_Installed() )
 	{
-		if (Session.Type == GAME_SKIRMISH) {
+		/*
+		**	The retail game turns the Aftermath units on for every skirmish game. A spawned
+		**	match has to follow the Aftermath setting that the CnCNet client put in
+		**	SPAWN.INI instead, otherwise an "Aftermath = no" match silently enables the
+		**	Aftermath rules (including its multiple-factory build speed limit).
+		*/
+		if (Session.Type == GAME_SKIRMISH && !Spawner.Active) {
 			bAftermathMultiplayer = NewUnitsEnabled = true;
 		}
 	}	

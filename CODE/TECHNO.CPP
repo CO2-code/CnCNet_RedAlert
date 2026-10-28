@@ -134,6 +134,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include	"diaglog.h"
 
 
 /***************************************************************************
@@ -158,7 +159,7 @@ const char* NewName[] = {
 	"Scout Ant",	  			"Kundschafter-Ameise",
 	"Warrior Ant",    		"Krieger-Ameise",
 	"Fire Ant",	  				"Feuer-Ameise",
-	"Queen Ant",	  			"Ameisenk”nigin",
+	"Queen Ant",	  			"Ameisenkï¿½nigin",
 	"ATS",						"Angriffs-U-Boot",
 	"Tesla Tank",	  			"Telsapanzer",
 	"Volkov",  					"Modell Volkov",
@@ -174,7 +175,7 @@ const char* NewName[] = {
 #ifdef FRENCH
 const char* NewName[] = {
 	"Scout Ant",	  			"Fourmi de Reconnaissance",
-	"Warrior Ant",    		"Fourmi GuerriŠre",
+	"Warrior Ant",    		"Fourmi Guerriï¿½re",
 	"Fire Ant",	  				"Fourmi Lance-Flammes",
 	"Queen Ant",	  			"Reine des Fourmis",
 	"ATS", 						"SMTA",
@@ -182,9 +183,9 @@ const char* NewName[] = {
 	"Volkov",  					"Volkov",
 	"Chitzkoi", 				"Cyber-Chien",
 	"Stavros",					"Stavros",
-	"F-A Longbow",				"HAA (H‚licoptŠre d'Assaut Avanc‚)",
-	"Civilian Specialist",	"Sp‚cialiste Civil",
-	"Alloy Facility",			"Usine M‚tallurgique",
+	"F-A Longbow",				"HAA (Hï¿½licoptï¿½re d'Assaut Avancï¿½)",
+	"Civilian Specialist",	"Spï¿½cialiste Civil",
+	"Alloy Facility",			"Usine Mï¿½tallurgique",
 	NULL,
 	};
 
@@ -649,6 +650,27 @@ TechnoClass::TechnoClass(RTTIType rtti, int id, HousesType house) :
 //#define UNIT_BUILD_BIAS fixed(5,1)
 
 extern int UnitBuildPenalty;
+extern bool AftermathFastBuildSpeed;
+extern bool FastAMBuildSpeed;
+
+/*
+**	Aftermath limits the multiple-factory production bonus of units to two factories. The
+**	3.03 executable lifts the limit when [Aftermath] AftermathFastBuildSpeed (RULES.INI), the
+**	spawner's SPAWN.INI setting, or [Options] FastAMBuildSpeed (skirmish/single player) says
+**	so. Without this, a spawned match silently loses the war factory speed bonus that a
+**	non-Aftermath game (and single player) gives, because Read_Scenario_INI forces
+**	NewUnitsEnabled on for every skirmish game when Aftermath is installed.
+*/
+static bool Is_Aftermath_Fast_Build_Speed(void)
+{
+	if (AftermathFastBuildSpeed) {
+		return(true);
+	}
+	if (FastAMBuildSpeed && (Session.Type == GAME_NORMAL || Session.Type == GAME_SKIRMISH)) {
+		return(true);
+	}
+	return(false);
+}
 
 int TechnoClass::Time_To_Build(void) const
 {
@@ -686,7 +708,7 @@ int TechnoClass::Time_To_Build(void) const
 #ifdef FIXIT_CSII	//	checked - ajw 9/28/98
 // Hack: allow the multiple-factory bonus, but only up to two factories if
 //			this is an AM<->AM game.
-		if(NewUnitsEnabled) {
+		if(NewUnitsEnabled && !Is_Aftermath_Fast_Build_Speed()) {
 			val /= min(divisor,2);
 		} else {
 			val /= divisor;
@@ -694,6 +716,17 @@ int TechnoClass::Time_To_Build(void) const
 #else
 		val /= divisor;
 #endif
+	}
+
+	if (Spawner.Active) {
+		/*
+		**	Give the client (and us) a breadcrumb trail in RA_DIAG.LOG that shows how the
+		**	multiple-factory bonus was applied to every production run.
+		*/
+		RA_DiagLog_Write(RA_DIAG_LOG_TRACE,
+			"Spawner build time: product=%d factories=%d aftermath=%d fastbuild=%d time=%d",
+			(int)What_Am_I(), divisor, NewUnitsEnabled ? 1 : 0,
+			Is_Aftermath_Fast_Build_Speed() ? 1 : 0, val);
 	}
 	return(val);
 }

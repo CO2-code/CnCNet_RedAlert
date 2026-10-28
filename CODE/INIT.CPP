@@ -1853,6 +1853,12 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	Special.IsTSpread = (Session.Options.Tiberium != 0);
 	Special.IsShadowGrow = spawnini.Get_Bool("Settings", "ShroudRegrows", false);
 	UnitBuildPenalty = spawnini.Get_Bool("Settings", "SlowUnitBuild", false) ? 0xFA : 0x64;
+	/*
+	**	Aftermath normally limits the multiple-factory unit bonus to two factories. The client
+	**	can ask for the unlimited (pre-Aftermath) build speed, exactly like the patched
+	**	executable does with the same SPAWN.INI key.
+	*/
+	AftermathFastBuildSpeed = spawnini.Get_Bool("Settings", "AftermathFastBuildSpeed", false);
 	BuildLevel = spawnini.Get_Int("Settings", "TechLevel", 10);
 
 	int aiDifficulty = spawnini.Get_Int("Settings", "AIDifficulty", 2);
@@ -1885,10 +1891,10 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	CustomSeed = Seed;
 	Options.GameSpeed = spawnini.Get_Int("Settings", "GameSpeed", 1);
 	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
-		"Spawner settings: bases=%d credits=%d oreRegenerates=%d crates=%d unitCount=%d aiPlayers=%d gameSpeed=%d aftermath=%d",
+		"Spawner settings: bases=%d credits=%d oreRegenerates=%d crates=%d unitCount=%d aiPlayers=%d gameSpeed=%d aftermath=%d fastAMBuildSpeed=%d",
 		Session.Options.Bases, Session.Options.Credits, Session.Options.Tiberium,
 		Session.Options.Goodies, Session.Options.UnitCount, Session.Options.AIPlayers,
-		Options.GameSpeed, aftermath ? 1 : 0);
+		Options.GameSpeed, aftermath ? 1 : 0, AftermathFastBuildSpeed ? 1 : 0);
 
 	/*
 	** Build the player list. The first entry is always the local player;

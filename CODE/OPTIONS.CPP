@@ -594,6 +594,13 @@ void OptionsClass::Load_Settings(void)
 	SlowPalette = ini.Get_Bool(OPTIONS, "SlowPalette", SlowPalette);
 	IsPaletteScroll = ini.Get_Bool(OPTIONS, "PaletteScroll", IsPaletteScroll);
 
+	/*
+	**	Aftermath limits the multiple-factory production bonus. This option lifts that limit
+	**	for skirmish and single player games (it has no effect on networked matches, which
+	**	follow the rules.ini / SPAWN.INI setting instead).
+	*/
+	FastAMBuildSpeed = ini.Get_Bool(OPTIONS, "FastAMBuildSpeed", FastAMBuildSpeed);
+
 	KeyForceMove1 = (KeyNumType)ini.Get_Int(HotkeyName, "KeyForceMove1", KeyForceMove1);
 	KeyForceMove2 = (KeyNumType)ini.Get_Int(HotkeyName, "KeyForceMove2", KeyForceMove2);
 	KeyForceAttack1 = (KeyNumType)ini.Get_Int(HotkeyName, "KeyForceAttack1", KeyForceAttack1);

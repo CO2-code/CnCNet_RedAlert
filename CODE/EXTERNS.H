@@ -479,6 +479,8 @@ bool 	Do_The_Internet_Menu_Thang (void);
 bool 	Server_Remote_Connect(void);
 bool 	Client_Remote_Connect(void);
 extern	int UnitBuildPenalty;
+extern	bool AftermathFastBuildSpeed;
+extern	bool FastAMBuildSpeed;
 
 
 #endif	 //WIN32

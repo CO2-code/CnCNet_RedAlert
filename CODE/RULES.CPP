@@ -391,6 +391,11 @@ bool RulesClass::General(CCINIClass & ini)
 //debugprint( "NewUnitsEnabled previously %i\n", NewUnitsEnabled );
 		NewUnitsEnabled = ini.Get_Int(AFTERMATH, "NewUnitsEnabled", 0);
 //debugprint( "NewUnitsEnabled set to %i by Rules\n", NewUnitsEnabled );
+		/*
+		**	Aftermath limits the multiple-factory bonus of units. This is the 3.03 option that
+		**	lifts the limit (the CnCNet Spawner also passes it in SPAWN.INI).
+		*/
+		AftermathFastBuildSpeed = ini.Get_Bool(AFTERMATH, "AftermathFastBuildSpeed", AftermathFastBuildSpeed);
 		MTankDistance = ini.Get_Int(AFTERMATH,"MTankDistance",MTankDistance);
 		QuakeUnitDamage = ini.Get_Fixed(AFTERMATH, "QuakeUnitDamage", QuakeUnitDamage);
 		QuakeBuildingDamage = ini.Get_Fixed(AFTERMATH, "QuakeBuildingDamage", QuakeBuildingDamage);
