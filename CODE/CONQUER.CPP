@@ -271,12 +271,13 @@ void Main_Game(int argc, char * argv[])
 		}
 
 #ifdef WIN32
-		if (Session.Type == GAME_INTERNET) {
+		if (Session.Type == GAME_INTERNET || Spawner.Active) {
 			Register_Game_Start_Time();
 			GameStatisticsPacketSent = false;
 			PacketLater = NULL;
 			ConnectionLost = false;
-		} else {
+		}
+		if (Session.Type != GAME_INTERNET) {
 #ifndef WOLAPI_INTEGRATION
 			DDEServer.Disable();
 #endif	//	!WOLAPI_INTEGRATION
@@ -431,6 +432,17 @@ void Main_Game(int argc, char * argv[])
 		*/
 		if (!GameStatisticsPacketSent && PacketLater) {
 			Send_Statistics_Packet();		//	After game sending if PacketLater set.
+		}
+
+		/*
+		**	CnCNet Spawner: a spawned match reports its statistics exactly once, even when the
+		**	match ended through a path that never reached Stop_Game() (the host quitting, the
+		**	options menu aborting the scenario, the game ending in a draw, ...). The CnCNet
+		**	client reads the report from STATS.DMP once the game has exited.
+		*/
+		if (Spawner.Active && !Spawner.StatsWritten) {
+			RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Main_Game: spawned match ended without a statistics report");
+			Send_Statistics_Packet();
 		}
 #endif	//WIN32
 

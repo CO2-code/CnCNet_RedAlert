@@ -711,22 +711,25 @@ HouseClass::~HouseClass (void)
 {
 	Class = 0;
 
-	if (Spawner_Track_Stats()) {
-		delete AircraftTotals;
-		delete InfantryTotals;
-		delete UnitTotals;
-		delete BuildingTotals;
-		delete VesselTotals;
+	/*
+	**	The trackers are only allocated for matches that report statistics (internet games
+	**	and CnCNet Spawner matches). They were NULLed by the constructor, so it is safe --
+	**	and simpler than tracking the session type -- to delete them unconditionally.
+	*/
+	delete AircraftTotals;
+	delete InfantryTotals;
+	delete UnitTotals;
+	delete BuildingTotals;
+	delete VesselTotals;
 
-		delete DestroyedAircraft;
-		delete DestroyedInfantry;
-		delete DestroyedUnits;
-		delete DestroyedBuildings;
-		delete DestroyedVessels;
+	delete DestroyedAircraft;
+	delete DestroyedInfantry;
+	delete DestroyedUnits;
+	delete DestroyedBuildings;
+	delete DestroyedVessels;
 
-		delete CapturedBuildings;
-		delete TotalCrates;
-	}
+	delete CapturedBuildings;
+	delete TotalCrates;
 }
 
 

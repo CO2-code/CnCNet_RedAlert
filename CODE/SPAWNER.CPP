@@ -538,13 +538,35 @@ bool Spawner_Write_Stats(void const * data, int length)
 	if (!Spawner.Active || Spawner.StatsWritten) {
 		return(false);
 	}
-	CCFileClass file("STATS.DMP");
-	if (!file.Open(WRITE)) {
-		RA_DiagLog_Write(RA_DIAG_LOG_WARN, "Spawner: cannot open STATS.DMP");
+
+	if (data == NULL || length <= 0) {
+		RA_DiagLog_Write(RA_DIAG_LOG_WARN,
+			"Spawner: not writing STATS.DMP (data=%p length=%d)", data, length);
 		return(false);
 	}
-	file.Write(data, length);
+
+	/*
+	**	Write straight to the game directory with a raw file. CCFileClass would also look
+	**	inside the MIX files and its open can fail when the archive holds a stale
+	**	STATS.DMP, which is exactly what must not happen here -- the client reads the file
+	**	straight off the disk.
+	*/
+	RawFileClass file("STATS.DMP");
+	if (!file.Open(WRITE)) {
+		RA_DiagLog_Write(RA_DIAG_LOG_WARN, "Spawner: cannot open STATS.DMP for writing");
+		return(false);
+	}
+
+	long written = file.Write(data, length);
 	file.Close();
+
+	if (written != length) {
+		RA_DiagLog_Write(RA_DIAG_LOG_WARN,
+			"Spawner: short write to STATS.DMP (%ld of %d bytes)", written, length);
+		return(false);
+	}
+
+	RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: wrote STATS.DMP (%d bytes)", length);
 	Spawner.StatsWritten = true;
 	return(true);
 }

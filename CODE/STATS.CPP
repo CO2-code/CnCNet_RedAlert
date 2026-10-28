@@ -47,6 +47,7 @@
 #include "tcpip.h"
 #include "packet.h"
 #include "ccdde.h"
+#include "diaglog.h"
 
 #define FIELD_PACKET_TYPE						"TYPE"
 #define FIELD_GAME_ID							"IDNO"
@@ -210,11 +211,15 @@ void Send_Statistics_Packet(void)
 	bool spawner = Spawner.Active;
 	if (spawner) {
 		if (Session.Type == GAME_NORMAL || Spawner.LoadedSave || Spawner.StatsWritten) {
+			RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+				"Stats: spawner report skipped (type=%d loadedSave=%d written=%d)",
+				(int)Session.Type, Spawner.LoadedSave ? 1 : 0, Spawner.StatsWritten ? 1 : 0);
 			return;
 		}
 		if (GameTimerInUse) {
 			Register_Game_End_Time();
 		}
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Stats: building the spawner statistics report");
 	}
 
 	PacketClass	stats;
@@ -695,6 +700,23 @@ void Send_Statistics_Packet(void)
 #ifdef WOLAPI_INTEGRATION
 			if( !player )
 				continue;
+
+			/*
+			**	The per-house trackers are only allocated for matches that report statistics
+			**	(internet games and CnCNet Spawner matches). A house that predates the match
+			**	type -- or a spectator slot that was never set up -- has no trackers, and
+			**	dereferencing them would abort the report before STATS.DMP is written.
+			*/
+			if (player->InfantryTotals == NULL || player->UnitTotals == NULL ||
+					player->AircraftTotals == NULL || player->BuildingTotals == NULL ||
+					player->VesselTotals == NULL || player->DestroyedInfantry == NULL ||
+					player->DestroyedUnits == NULL || player->DestroyedAircraft == NULL ||
+					player->DestroyedBuildings == NULL || player->DestroyedVessels == NULL ||
+					player->CapturedBuildings == NULL || player->TotalCrates == NULL) {
+				RA_DiagLog_Write(RA_DIAG_LOG_WARN,
+					"Stats: house %d has no unit trackers; skipping its report", house);
+				continue;
+			}
 #endif
 
 			/*
@@ -931,6 +953,8 @@ void Send_Statistics_Packet(void)
 	** CnCNet Spawner: hand the packet to the CnCNet client through STATS.DMP.
 	*/
 	if (spawner) {
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+			"Stats: spawner packet ready (packet=%p size=%d)", packet, packet_size);
 		bool written = Spawner_Write_Stats(packet, packet_size);
 		delete [] packet;
 		if (written) {
