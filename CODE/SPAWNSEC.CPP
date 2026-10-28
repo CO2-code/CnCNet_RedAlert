@@ -256,7 +256,7 @@ void Sha256Class::Final(unsigned char * digest)
 unsigned int Spawner_Crc32(unsigned int seed, void const * data, unsigned long length)
 {
 	static unsigned int table[256];
-	static bool table_ready = false;
+	static int table_ready = 0;
 
 	if (!table_ready) {
 		for (unsigned int n = 0; n < 256; n++) {
@@ -270,7 +270,7 @@ unsigned int Spawner_Crc32(unsigned int seed, void const * data, unsigned long l
 			}
 			table[n] = c;
 		}
-		table_ready = true;
+		table_ready = 1;
 	}
 
 	unsigned char const * bytes = (unsigned char const *)data;
