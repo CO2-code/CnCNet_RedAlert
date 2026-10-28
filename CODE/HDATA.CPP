@@ -246,8 +246,18 @@ static HouseTypeClass const HouseMulti8(
 	'M'							// VOICE:		Voice prefix character.
 );
 
+static HouseTypeClass const HouseSpectator(
+	HOUSE_SPECTATOR,
+	"Spectator",					// NAME: House name.
+	TXT_SPECTATOR,					// FULLNAME: Translated house name.
+	"SPC",								// SUFFIX: House file suffix.
+	0,									// LEMON: Lemon vehicle frequency.
+	PCOLOR_GOLD,							// Remap color ID number.
+	'S'									// VOICE: Voice prefix character.
+);
+
 #ifdef OBSOLETE
-HouseTypeClass const * const HouseTypeClass::Pointers[HOUSE_COUNT] = {
+HouseTypeClass const * const HouseTypeClass::Pointers[HOUSE_TYPE_COUNT] = {
 	&HouseSpain,
 	&HouseGreece,
 	&HouseUSSR,
@@ -268,6 +278,7 @@ HouseTypeClass const * const HouseTypeClass::Pointers[HOUSE_COUNT] = {
 	&HouseMulti6,
 	&HouseMulti7,
 	&HouseMulti8,
+	&HouseSpectator,
 };
 #endif
 
@@ -400,6 +411,7 @@ void HouseTypeClass::Init_Heap(void)
 	new HouseTypeClass(HouseMulti6);
 	new HouseTypeClass(HouseMulti7);
 	new HouseTypeClass(HouseMulti8);
+	new HouseTypeClass(HouseSpectator);
 }
 
 
