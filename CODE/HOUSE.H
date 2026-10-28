@@ -679,6 +679,7 @@ class HouseClass {
 		void Make_Enemy(HousesType house);
 		void Make_Enemy(ObjectClass * object) {if (object) Make_Enemy(object->Owner());};
 		bool Is_Ally(HousesType house) const;
+		unsigned Get_Allies_Mask(void) const {return(Allies);}
 		bool Is_Ally(HouseClass const * house) const;
 		bool Is_Ally(ObjectClass const * object) const;
 		#ifdef CHEAT_KEYS

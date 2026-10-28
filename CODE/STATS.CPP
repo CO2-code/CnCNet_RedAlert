@@ -892,7 +892,7 @@ void Send_Statistics_Packet(void)
 				field_player_dead[3] = '1' + (char)house;
 				field_player_spectator[3] = '1' + (char)house;
 
-				stats.Add_Field (field_player_allies, (unsigned long) player->Allies);
+				stats.Add_Field (field_player_allies, (unsigned long) player->Get_Allies_Mask());
 				stats.Add_Field (field_player_connection_lost, (unsigned long) (Spawner_Was_Connection_Lost(housetype) ? 1 : 0));
 				stats.Add_Field (field_player_resigned, (unsigned long) (Spawner_Was_Resigned(housetype) ? 1 : 0));
 				stats.Add_Field (field_player_spawn, (unsigned long) Spawner_Get_Start_Cell(housetype));
