@@ -1741,7 +1741,8 @@ void HouseClass::Super_Weapon_Handler(void)
 			}
 		}
 	} else {
-		if ((ActiveBScan & STRUCTF_AIRSTRIP) != 0 && Control.TechLevel >= Rule.ParaBombTechLevel && Session.Type == GAME_NORMAL) {
+		if ((ActiveBScan & STRUCTF_AIRSTRIP) != 0 && Control.TechLevel >= Rule.ParaBombTechLevel &&
+			(Session.Type == GAME_NORMAL || Rule.ParabombsInMultiplayer)) {
 			SuperWeapon[SPC_PARA_BOMB].Enable(false, this == PlayerPtr, false);
 			if (this == PlayerPtr) {
 				Map.Add(RTTI_SPECIAL, SPC_PARA_BOMB);

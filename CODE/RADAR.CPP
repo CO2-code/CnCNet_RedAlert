@@ -2483,7 +2483,7 @@ void RadarClass::Draw_Names(void)
 		*/
 		c_idx = ptr->RemapColor;
 
-		if (ptr->IsDefeated) {
+		if (ptr->IsDefeated && !Rule.DeadPlayersRadar) {
 			color = &GreyScheme;
 			style = TPF_6PT_GRAD | TPF_NOSHADOW;
 		} else {

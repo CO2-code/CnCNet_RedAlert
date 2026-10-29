@@ -5477,6 +5477,11 @@ int Owner_From_Name(char const * text)
 void Shake_The_Screen(int shakes)
 {
 #ifdef WIN32
+	/* CnCNet Spawner: skip screen shake entirely when enabled. */
+	if (Rule.NoScreenShake) {
+		return;
+	}
+
 	shakes += shakes;
 
 	Hide_Mouse();
