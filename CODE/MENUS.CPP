@@ -912,16 +912,7 @@ int Main_Menu(unsigned long )
 				{
 					char buf[1024];
 					memset(buf, 0, sizeof(buf));
-					time_t t;
-					time(&t);
-					struct tm* tm = localtime(&t);
-					sprintf(buf, "replays\game-%d-%d-%d-%d-%d-%d.replay",
-							tm->tm_year + 1900,
-								tm->tm_mon + 1,
-								tm->tm_mday,
-								tm->tm_hour,
-								tm->tm_min,
-								tm->tm_sec);
+					sprintf(buf, "replays\game-%lu.replay", TickCount);
 					Session.RecordFile.Set_Name(buf);
 				}
 				/* Open recording file and save initial values */
