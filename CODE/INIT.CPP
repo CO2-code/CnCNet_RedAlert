@@ -1964,6 +1964,9 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 
 		ipBuffer[0] = 0;
 		spawnini.Get_String(section, "IP", "", ipBuffer, sizeof(ipBuffer));
+		if (ipBuffer[0] == 0) {
+			spawnini.Get_String(section, "Ip", "", ipBuffer, sizeof(ipBuffer));
+		}
 		int otherPort = spawnini.Get_Int(section, "Port", 1234);
 
 		/*
