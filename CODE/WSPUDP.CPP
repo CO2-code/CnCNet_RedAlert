@@ -45,6 +45,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"function.h"
+#include	"diaglog.h"
 #include	"internet.h"
 #include	"WSPUDP.h"
 
