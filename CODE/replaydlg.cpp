@@ -387,8 +387,8 @@ void LoadReplayClass::Clear_List(ListClass* list)
 	/*
 	**	Clear the array of game numbers
 	*/
-	for (int i = 0; i < Files.Count(); i++) {
-		delete Files[i];
+	for (int k = 0; k < Files.Count(); k++) {
+		delete Files[k];
 	}
 	Files.Clear();
 }
@@ -412,9 +412,6 @@ void LoadReplayClass::Clear_List(ListClass* list)
 void LoadReplayClass::Fill_List(ListClass* list)
 {
 	ReplayFileEntryClass* fdata;	// for adding entries to 'Files'
-	char descr[DESCRIP_MAX + 32];
-	unsigned scenario;		// scenario #
-	HousesType house;		// house
 	struct find_t ff;		// for _dos_findfirst
 	int id = 0;
 
