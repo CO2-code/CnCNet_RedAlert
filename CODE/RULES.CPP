@@ -189,6 +189,18 @@ RulesClass::RulesClass(void) :
 	IsHealthBar(true),
 	IsMCVDeploy(false),
 	IsAllyReveal(true),
+	FixFormationSpeed(false),
+	FixRangeExploit(false),
+	FixMagicBuild(false),
+	ParabombsInMultiplayer(false),
+	FixAiSendingTanksToTopLeft(false),
+	FixNavalExploits(false),
+	TechCenterBugFix(false),
+	BuildOffAlly(false),
+	SouthAdvantageFix(false),
+	NoScreenShake(false),
+	NoTeslaZapEffectDelay(false),
+	DeadPlayersRadar(false),
 	IsSeparate(false),
 	IsTreeTarget(false),
 	IsMineAware(true),
@@ -489,6 +501,18 @@ bool RulesClass::General(CCINIClass & ini)
 		IsAllyReveal = ini.Get_Bool(GENERAL, "AllyReveal", IsAllyReveal);
 		IsHealthBar = ini.Get_Bool(GENERAL, "EnemyHealth", IsHealthBar);
 		IsMCVDeploy = ini.Get_Bool(GENERAL, "MCVUndeploy", IsMCVDeploy);
+		FixFormationSpeed = ini.Get_Bool(GENERAL, "FixFormationSpeed", FixFormationSpeed);
+		FixRangeExploit = ini.Get_Bool(GENERAL, "FixRangeExploit", FixRangeExploit);
+		FixMagicBuild = ini.Get_Bool(GENERAL, "FixMagicBuild", FixMagicBuild);
+		ParabombsInMultiplayer = ini.Get_Bool(GENERAL, "ParabombsInMultiplayer", ParabombsInMultiplayer);
+		FixAiSendingTanksToTopLeft = ini.Get_Bool(GENERAL, "FixAiSendingTanksToTopLeft", FixAiSendingTanksToTopLeft);
+		FixNavalExploits = ini.Get_Bool(GENERAL, "FixNavalExploits", FixNavalExploits);
+		TechCenterBugFix = ini.Get_Bool(GENERAL, "TechCenterBugFix", TechCenterBugFix);
+		BuildOffAlly = ini.Get_Bool(GENERAL, "BuildOffAlly", BuildOffAlly);
+		SouthAdvantageFix = ini.Get_Bool(GENERAL, "SouthAdvantageFix", SouthAdvantageFix);
+		NoScreenShake = ini.Get_Bool(GENERAL, "NoScreenShake", NoScreenShake);
+		NoTeslaZapEffectDelay = ini.Get_Bool(GENERAL, "NoTeslaZapEffectDelay", NoTeslaZapEffectDelay);
+		DeadPlayersRadar = ini.Get_Bool(GENERAL, "DeadPlayersRadar", DeadPlayersRadar);
 		MaxDamage = ini.Get_Int(GENERAL, "MaxDamage", MaxDamage);
 		MinDamage = ini.Get_Int(GENERAL, "MinDamage", MinDamage);
 		ProneDamageBias = ini.Get_Fixed(GENERAL, "ProneDamage", ProneDamageBias);

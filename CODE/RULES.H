@@ -549,6 +549,69 @@ class RulesClass {
 		unsigned IsAllyReveal:1;
 
 		/*
+		**	CnCNet Spawner: Fix formation speed - units in formation move at
+		**	the speed of the slowest unit rather than the leader.
+		*/
+		unsigned FixFormationSpeed:1;
+
+		/*
+		**	CnCNet Spawner: Fix infantry range exploit - prevents infantry
+		**	from outranging their intended targets.
+		*/
+		unsigned FixRangeExploit:1;
+
+		/*
+		**	CnCNet Spawner: Fix magic build - removes the restriction that
+		**	prevents building when the cursor is over certain terrain.
+		*/
+		unsigned FixMagicBuild:1;
+
+		/*
+		**	CnCNet Spawner: Allow parabombs in multiplayer games.
+		*/
+		unsigned ParabombsInMultiplayer:1;
+
+		/*
+		**	CnCNet Spawner: Fix AI sending tanks to top-left corner.
+		*/
+		unsigned FixAiSendingTanksToTopLeft:1;
+
+		/*
+		**	CnCNet Spawner: Fix naval exploits.
+		*/
+		unsigned FixNavalExploits:1;
+
+		/*
+		**	CnCNet Spawner: Tech Center bug fix.
+		*/
+		unsigned TechCenterBugFix:1;
+
+		/*
+		**	CnCNet Spawner: Build off ally - allows building on allied terrain.
+		*/
+		unsigned BuildOffAlly:1;
+
+		/*
+		**	CnCNet Spawner: South advantage fix.
+		*/
+		unsigned SouthAdvantageFix:1;
+
+		/*
+		**	CnCNet Spawner: No screen shake.
+		*/
+		unsigned NoScreenShake:1;
+
+		/*
+		**	CnCNet Spawner: No Tesla zap effect delay.
+		*/
+		unsigned NoTeslaZapEffectDelay:1;
+
+		/*
+		**	CnCNet Spawner: Dead players show on radar.
+		*/
+		unsigned DeadPlayersRadar:1;
+
+		/*
 		**	Can the helipad (and airfield) be purchased separately from the associated
 		**	aircraft.
 		*/

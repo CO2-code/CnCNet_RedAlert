@@ -1890,7 +1890,24 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	** the values from RULES.INI for the duration of the spawned match. */
 	Rule.IsAllyReveal = spawnini.Get_Bool("Settings", "AllyReveal", Rule.IsAllyReveal);
 	Rule.IsMCVDeploy = spawnini.Get_Bool("Settings", "MCVUndeploy", Rule.IsMCVDeploy);
+	Rule.FixFormationSpeed = spawnini.Get_Bool("Settings", "FixFormationSpeed", Rule.FixFormationSpeed);
+	Rule.FixRangeExploit = spawnini.Get_Bool("Settings", "FixRangeExploit", Rule.FixRangeExploit);
+	Rule.FixMagicBuild = spawnini.Get_Bool("Settings", "FixMagicBuild", Rule.FixMagicBuild);
+	Rule.ParabombsInMultiplayer = spawnini.Get_Bool("Settings", "ParabombsInMultiplayer", Rule.ParabombsInMultiplayer);
+	Rule.FixAiSendingTanksToTopLeft = spawnini.Get_Bool("Settings", "FixAiSendingTanksToTopLeft", Rule.FixAiSendingTanksToTopLeft);
+	Rule.FixNavalExploits = spawnini.Get_Bool("Settings", "FixNavalExploits", Rule.FixNavalExploits);
+	Rule.TechCenterBugFix = spawnini.Get_Bool("Settings", "TechCenterBugFix", Rule.TechCenterBugFix);
+	Rule.BuildOffAlly = spawnini.Get_Bool("Settings", "BuildOffAlly", Rule.BuildOffAlly);
+	Rule.SouthAdvantageFix = spawnini.Get_Bool("Settings", "SouthAdvantageFix", Rule.SouthAdvantageFix);
+	Rule.NoScreenShake = spawnini.Get_Bool("Settings", "NoScreenShake", Rule.NoScreenShake);
+	Rule.NoTeslaZapEffectDelay = spawnini.Get_Bool("Settings", "NoTeslaZapEffectDelay", Rule.NoTeslaZapEffectDelay);
+	Rule.DeadPlayersRadar = spawnini.Get_Bool("Settings", "DeadPlayersRadar", Rule.DeadPlayersRadar);
 	Options.ShortGame = spawnini.Get_Bool("Settings", "ShortGame", false);
+
+	/* CnCNet Spawner: hardcoded fixes from ra-patches spawn.asm that
+	** override any SPAWN.INI setting. */
+	Rule.FixAiSendingTanksToTopLeft = true;
+	Rule.FixNavalExploits = true;
 
 	int aiDifficulty = spawnini.Get_Int("Settings", "AIDifficulty", 2);
 	Scen.Difficulty = DIFF_NORMAL;
