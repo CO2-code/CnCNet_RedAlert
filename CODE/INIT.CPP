@@ -1916,6 +1916,11 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	Spawner.PlayerIsGameHost = spawnini.Get_Bool("Settings", "PlayerIsGameHost", true);
 	BuildLevel = spawnini.Get_Int("Settings", "TechLevel", 10);
 
+	/* CnCNet Spawner: record spawner-launched match to replays/RECORD.BIN.
+	** Can also be enabled via -X command line flag, but SPAWN.INI setting
+	** is more convenient for CnCNet client launches. */
+	Session.Record = spawnini.Get_Bool("Settings", "Record", Session.Record);
+
 	/* CnCNet Spawner: apply game-fix options from SPAWN.INI. These override
 	** the values from RULES.INI for the duration of the spawned match. */
 	Rule.IsAllyReveal = spawnini.Get_Bool("Settings", "AllyReveal", Rule.IsAllyReveal);
