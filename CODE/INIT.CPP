@@ -1936,6 +1936,11 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 				tm->tm_min,
 				tm->tm_sec);
 		Session.RecordFile.Set_Name(buf);
+		if (Session.RecordFile.Open(WRITE)) {
+				Save_Recording_Values(Session.RecordFile);
+			} else {
+				Session.Record = false;
+			}
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
 				"Spawner: recording match to %s", buf);
 	}
