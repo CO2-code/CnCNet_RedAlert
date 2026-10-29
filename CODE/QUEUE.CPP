@@ -565,7 +565,17 @@ static void Queue_AI_Multiplayer(void)
 		FRAMESYNC_TIMEOUT = (15*60),	// timeout waiting for frame sync packet
 	};
 
+	/* CnCNet Spawner: shorter reconnect timer for spawner matches.
+	** ra-patches shorter_multiplayer_reconnect_timer.asm reduces reconnect
+	** times from 120 seconds to 17/27 seconds. */
 	int timeout_factor = (Session.Type == GAME_INTERNET) ? 6 : 1;
+	int framesyncDlgTime = FRAMESYNC_DLG_TIME;
+	int framesyncTimeout = FRAMESYNC_TIMEOUT;
+	if (Spawner.Active) {
+		framesyncDlgTime = 17;      // ~17 seconds (was 3 minutes)
+		framesyncTimeout = 27;      // ~27 seconds (was 15 minutes)
+		timeout_factor = 1;
+	}
 
 	//........................................................................
 	// Variables for sending, receiving & parsing packets:
@@ -683,7 +693,7 @@ static void Queue_AI_Multiplayer(void)
 		//.....................................................................
 		// Wait for the other guys
 		//.....................................................................
-		rc = Wait_For_Players (1, net, MIXFILE_RESEND_DELTA, FRAMESYNC_DLG_TIME*timeout_factor,
+		rc = Wait_For_Players (1, net, MIXFILE_RESEND_DELTA, framesyncDlgTime*timeout_factor,
 			MIXFILE_TIMEOUT, multi_packet_buf, my_sent, their_frame,
 			their_sent, their_recv);
 
@@ -807,19 +817,19 @@ static void Queue_AI_Multiplayer(void)
 		//	Shortened resync timeout for non-2 player games.
 		iFramesyncTimeout = 5 * 60;		//	One minute.
 	else
-		iFramesyncTimeout = FRAMESYNC_TIMEOUT;
+		iFramesyncTimeout = framesyncTimeout;
 
 	rc = Wait_For_Players (0, net,
 		(Session.MaxAhead << 3),
-		MAX ( net->Response_Time() * 3, FRAMESYNC_DLG_TIME*timeout_factor ),
+		MAX ( net->Response_Time() * 3, framesyncDlgTime*timeout_factor ),
 		iFramesyncTimeout * (2*timeout_factor),
 		multi_packet_buf, my_sent, their_frame,
 		their_sent, their_recv);
 #else
 		rc = Wait_For_Players (0, net,
 		(Session.MaxAhead << 3),
-		MAX ( net->Response_Time() * 3, FRAMESYNC_DLG_TIME*timeout_factor ),
-		FRAMESYNC_TIMEOUT* (2*timeout_factor),
+		MAX ( net->Response_Time() * 3, framesyncDlgTime*timeout_factor ),
+		framesyncTimeout * (2*timeout_factor),
 		multi_packet_buf, my_sent, their_frame,
 		their_sent, their_recv);
 #endif
