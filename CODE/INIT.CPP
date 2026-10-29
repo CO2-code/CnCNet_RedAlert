@@ -636,9 +636,6 @@ bool Select_Game(bool fade)
 				RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Select_Game: Spawner initialization failed");
 				return(false);
 			}
-			/* Mark the spawner launch as consumed; subsequent Select_Game
-			** calls must not re-enter spawner startup. */
-			LaunchedFromSpawner = false;
 			RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Select_Game: Spawner settings loaded; proceeding with common startup");
 			process = false;
 			display = false;
