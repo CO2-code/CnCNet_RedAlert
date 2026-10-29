@@ -444,6 +444,19 @@ extern bool Get_Broadcast_Addresses (void);
 bool Select_Game(bool fade)
 {
 	//	Enums in Select_Game() must match order of buttons in Main_Menu().
+
+	/*
+	**	If we just returned from a CnCNet Spawner match, close the game
+	**	completely instead of returning to the main menu.
+	*/
+	if (!LaunchedFromSpawner && Spawner.Active) {
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+			"Select_Game: spawner match ended, closing game");
+		Spawner.Active = false;
+		SpawnerActive = false;
+		return(false);
+	}
+
 #ifdef FIXIT_VERSION_3
 	enum {
 		SEL_TIMEOUT = -1,				// main menu timeout--go into attract mode
