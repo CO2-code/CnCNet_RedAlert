@@ -1834,7 +1834,12 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	{
 		char tunnelIp[32];
 		tunnelIp[0] = 0;
+		/* SPAWN.INI entries are written with mixed-case keys (e.g. "Ip" not "IP");
+		** try both spellings so the tunnel server address is found regardless. */
 		spawnini.Get_String("Tunnel", "IP", "", tunnelIp, sizeof(tunnelIp));
+		if (tunnelIp[0] == 0) {
+			spawnini.Get_String("Tunnel", "Ip", "", tunnelIp, sizeof(tunnelIp));
+		}
 		unsigned long tunnelAddress = (tunnelIp[0] != 0) ? inet_addr(tunnelIp) : 0;
 		int tunnelServerPort = spawnini.Get_Int("Tunnel", "Port", 0) & 0xFFFF;
 		int tunnelId = spawnini.Get_Int("Settings", "Port", 0) & 0xFFFF;
