@@ -1235,9 +1235,22 @@ void HouseClass::AI(void)
 	** may not properly set IScan etc for each house; you have to go
 	** through each object's AI before it will be properly set.
 	*/
-	if (Session.Type != GAME_NORMAL && !IsDefeated &&
-		!ActiveBScan && !ActiveAScan && !UScan && !ActiveIScan && !ActiveVScan && Frame > 0) {
-		MPlayer_Defeated();
+	if (Session.Type != GAME_NORMAL && !IsDefeated && Frame > 0) {
+		bool defeated = false;
+		if (Options.ShortGame) {
+			// CnCNet Spawner short game: defeated when no buildings and no MCV
+			if (!ActiveBScan && !(UScan & UNITF_MCV)) {
+				defeated = true;
+			}
+		} else {
+			// Normal multiplayer: defeated when no units of any type remain
+			if (!ActiveBScan && !ActiveAScan && !UScan && !ActiveIScan && !ActiveVScan) {
+				defeated = true;
+			}
+		}
+		if (defeated) {
+			MPlayer_Defeated();
+		}
 	}
 
 	/*
