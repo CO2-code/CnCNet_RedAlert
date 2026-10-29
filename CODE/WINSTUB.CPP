@@ -163,6 +163,10 @@ void Check_For_Focus_Loss(void)
 
 extern BOOL InMovie;
 
+#ifndef WM_MOUSEHWHEEL
+#define WM_MOUSEHWHEEL 0x020E
+#endif
+
 long FAR PASCAL _export Windows_Procedure(HWND hwnd, UINT message, UINT wParam, LONG lParam)
 {
 
@@ -222,6 +226,21 @@ long FAR PASCAL _export Windows_Procedure(HWND hwnd, UINT message, UINT wParam, 
 //		case WM_RBUTTONDBLCLK:
 //	 		Keyboard->Message_Handler(hwnd, message, wParam, lParam);
 //			return(0);
+
+			/*
+		**	CnCNet Spawner: mouse wheel sidebar scrolling.
+		**	Horizontal mouse wheel scrolls the build sidebar left/right.
+		*/
+		case WM_MOUSEHWHEEL:
+			if (Options.MouseWheelScrolling) {
+				short delta = (short)HIWORD(wParam);
+				if (delta > 0) {
+					Map.SidebarClass::Scroll(true, -1);
+				} else if (delta < 0) {
+					Map.SidebarClass::Scroll(false, -1);
+				}
+			}
+			break;
 
 			/*
 			** Windoze message says we have to shut down. Try and do it cleanly.

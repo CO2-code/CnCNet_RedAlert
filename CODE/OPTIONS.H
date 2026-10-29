@@ -95,6 +95,7 @@ class OptionsClass {
 		unsigned IsScoreShuffle:1;	// Score list should shuffle?
 		unsigned IsPaletteScroll:1;// Allow palette scrolling?
 		unsigned ShortGame:1;		// Short game mode (defeat when no buildings + no MCV)
+		unsigned MouseWheelScrolling:1; // Enable mouse wheel sidebar scrolling
 
 		/*
 		**	These are the hotkeys used for keyboard control.

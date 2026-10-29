@@ -162,7 +162,8 @@ OptionsClass::OptionsClass(void) :
 	KeyMapSnapshot(KN_NONE),
 	KeyQuickSave(KN_P),
 	KeyQuickLoad(KN_L),
-	KeyDebug(KN_I)
+	KeyDebug(KN_I),
+	MouseWheelScrolling(false)
 {
 }
 
@@ -598,6 +599,7 @@ void OptionsClass::Load_Settings(void)
 	Set_Shuffle(ini.Get_Bool(OPTIONS, "IsScoreShuffle", IsScoreShuffle));
 	SlowPalette = ini.Get_Bool(OPTIONS, "SlowPalette", SlowPalette);
 	IsPaletteScroll = ini.Get_Bool(OPTIONS, "PaletteScroll", IsPaletteScroll);
+	MouseWheelScrolling = ini.Get_Bool(OPTIONS, "MouseWheelScrolling", MouseWheelScrolling);
 
 	/*
 	**	Aftermath limits the multiple-factory production bonus. This option lifts that limit
@@ -776,6 +778,7 @@ void OptionsClass::Save_Settings (void)
 	ini.Put_Bool(OPTIONS, "IsScoreRepeat", IsScoreRepeat);
 	ini.Put_Bool(OPTIONS, "IsScoreShuffle", IsScoreShuffle);
 	ini.Put_Bool(OPTIONS, "PaletteScroll", IsPaletteScroll);
+	ini.Put_Bool(OPTIONS, "MouseWheelScrolling", MouseWheelScrolling);
 
 	ini.Put_Int(HotkeyName, "KeyForceMove1", KeyForceMove1);
 	ini.Put_Int(HotkeyName, "KeyForceMove2", KeyForceMove2);
