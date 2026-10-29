@@ -1917,10 +1917,42 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	Spawner.PlayerIsGameHost = spawnini.Get_Bool("Settings", "PlayerIsGameHost", true);
 	BuildLevel = spawnini.Get_Int("Settings", "TechLevel", 10);
 
-	/* CnCNet Spawner: record spawner-launched match to replays/RECORD.BIN.
+	/* CnCNet Spawner: record spawner-launched match to replays/.
 	** Can also be enabled via -X command line flag, but SPAWN.INI setting
 	** is more convenient for CnCNet client launches. */
 	Session.Record = spawnini.Get_Bool("Settings", "Record", Session.Record);
+	if (Session.Record) {
+		/* Generate unique replay filename: replays/game-YYYY-MM-DD-HH-MM-SS.replay */
+		char buf[1024];
+		memset(buf, 0, sizeof(buf));
+		time_t t;
+		time(&t);
+		struct tm* tm = localtime(&t);
+		sprintf(buf, "replays\\game-%d-%d-%d-%d-%d-%d.replay",
+				tm->tm_year + 1900,
+				tm->tm_mon + 1,
+				tm->tm_mday,
+				tm->tm_hour,
+				tm->tm_min,
+				tm->tm_sec);
+		Session.RecordFile.Set_Name(buf);
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+				"Spawner: recording match to %s", buf);
+	}
+
+	/* CnCNet Spawner: play back a replay file specified in SPAWN.INI.
+	** Can be used by CnCNet client to automatically play a recorded match. */
+	char replayFile[1024];
+	spawnini.Get_String("Settings", "PlayReplay", "", replayFile, sizeof(replayFile));
+	if (replayFile[0] != 0) {
+		char buf[1024];
+		memset(buf, 0, sizeof(buf));
+		sprintf(buf, "replays\\%s", replayFile);
+		Session.RecordFile.Set_Name(buf);
+		Session.Play = true;
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+				"Spawner: playing back replay %s", buf);
+	}
 
 	/* CnCNet Spawner: apply game-fix options from SPAWN.INI. These override
 	** the values from RULES.INI for the duration of the spawned match. */
@@ -2628,6 +2660,24 @@ bool Parse_Command_Line(int argc, char * argv[])
 					*/
 					case 'X':
 						Session.Record = 1;
+						/* Generate unique replay filename: replays/game-YYYY-MM-DD-HH-MM-SS.replay */
+						{
+							char buf[1024];
+							memset(buf, 0, sizeof(buf));
+							time_t t;
+							time(&t);
+							struct tm* tm = localtime(&t);
+							sprintf(buf, "replays\\game-%d-%d-%d-%d-%d-%d.replay",
+								tm->tm_year + 1900,
+								tm->tm_mon + 1,
+								tm->tm_mday,
+								tm->tm_hour,
+								tm->tm_min,
+								tm->tm_sec);
+							Session.RecordFile.Set_Name(buf);
+							RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+								"Spawner: recording match to %s", buf);
+						}
 						break;
 
 					/*

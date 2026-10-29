@@ -187,7 +187,7 @@ SessionClass::SessionClass(void)
 	LastMessage[0] = 0;
 	WWChat = 0;
 
-	RecordFile.Set_Name("replays\\RECORD.BIN");	// replays subfolder
+	// Record filename set dynamically in INIT.CPP when recording starts
 	CreateDirectory("replays", NULL);
 	Record= 0;										// set via command line
 	Play = 0;										// set via command line
