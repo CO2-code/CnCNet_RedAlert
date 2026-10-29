@@ -62,6 +62,7 @@
 #include	"function.h"
 #include "diaglog.h"
 #include	"loaddlg.h"
+#include	"replaydlg.h"
 #ifdef WIN32
 #ifdef WINSOCK_IPX
 #include	"WSProto.h"
@@ -464,6 +465,7 @@ bool Select_Game(bool fade)
 		SEL_NEW_SCENARIO_AM,				// Expansion scenario to play.
 		SEL_START_NEW_GAME,			// start a new game
 		SEL_LOAD_MISSION,				// load a saved game
+		SEL_LOAD_REPLAY,				// load a replay
 		SEL_MULTIPLAYER_GAME,		// play modem/null-modem/network game
 		SEL_INTRO,						// couch-potato mode
 		SEL_EXIT,						// exit to DOS
@@ -482,6 +484,7 @@ bool Select_Game(bool fade)
 //		SEL_MOVIESETTINGS,
 //#endif
 		SEL_LOAD_MISSION,				// load a saved game
+		SEL_LOAD_REPLAY,				// load a replay
 		SEL_MULTIPLAYER_GAME,		// play modem/null-modem/network game
 		SEL_INTRO,						// couch-potato mode
 		SEL_EXIT,						// exit to DOS
@@ -974,6 +977,20 @@ bool Select_Game(bool fade)
 					} else {
 						display = true;
 						selection = SEL_NONE;
+					}
+					break;
+
+				case SEL_LOAD_REPLAY:
+					{
+						LoadReplayClass replayDlg;
+						if (replayDlg.Process()) {
+							Theme.Queue_Song(THEME_FIRST);
+							process = false;
+							gameloaded = true;
+						} else {
+							display = true;
+							selection = SEL_NONE;
+						}
 					}
 					break;
 
