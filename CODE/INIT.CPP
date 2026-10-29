@@ -1949,6 +1949,10 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		memset(buf, 0, sizeof(buf));
 		sprintf(buf, "replays\\%s", replayFile);
 		Session.RecordFile.Set_Name(buf);
+		if (Session.RecordFile.Open(READ)) {
+			Load_Recording_Values(Session.RecordFile);
+			Session.RecordFile.Close();
+		}
 		Session.Play = true;
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
 				"Spawner: playing back replay %s", buf);
