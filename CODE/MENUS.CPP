@@ -37,6 +37,9 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "function.h"
+
+extern bool Save_Recording_Values(CCFileClass & file);
+extern bool Load_Recording_Values(CCFileClass & file);
 #ifdef WIN32
 #include "ccdde.h"
 #else	//WIN32
@@ -904,7 +907,14 @@ int Main_Menu(unsigned long )
 
 			case (BUTTON_RECORD | KN_BUTTON):
 				Session.Record = true;
-				retval = (input & 0x7FFF) - BUTTON_EXPAND;
+				/* Open recording file and save initial values */
+				if (Session.RecordFile.Open(WRITE)) {
+					Save_Recording_Values(Session.RecordFile);
+				} else {
+					Session.Record = false;
+				}
+				/* Return SEL_START_NEW_GAME so game starts normally with recording */
+				retval = BUTTON_START - BUTTON_EXPAND;
 				process = false;
 				break;
 
