@@ -1978,7 +1978,10 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		} else if (!Spawner_Using_Tunnel()) {
 			ipValid = false;
 		}
-		if (!ipValid || otherPort <= 0 || otherPort > 65535) {
+		/* Through a tunnel the peer is identified by tunnel id alone; the
+		** SPAWN.INI IP/port for remote players are not used for routing and
+		** may be placeholders (e.g. 0.0.0.0 / negative). Skip validation. */
+		if (!Spawner_Using_Tunnel() && (!ipValid || otherPort <= 0 || otherPort > 65535)) {
 			WWMessageBox().Process("CnCNet Spawner: a remote player's IP address or port is invalid.", TXT_OK);
 			return(false);
 		}
