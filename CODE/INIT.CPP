@@ -1633,6 +1633,10 @@ bool Select_Game(bool fade)
 
 #endif
 
+	/* The spawner launch has been fully consumed; reset so the next
+	** Select_Game call (after this match ends) doesn't re-spawn. */
+	LaunchedFromSpawner = false;
+
 	return(true);
 }
 
