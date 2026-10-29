@@ -923,7 +923,7 @@ int Main_Menu(unsigned long )
 					Session.Record = false;
 				}
 				/* retval should start a new game with recording enabled */
-				retval = BUTTON_START - BUTTON_EXPAND;
+				retval = BUTTON_START - BUTTON_EXPAND + 1;
 				process = false;
 				break;
 
