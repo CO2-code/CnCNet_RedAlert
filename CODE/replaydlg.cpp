@@ -178,8 +178,6 @@ int LoadReplayClass::Process(void)
 	int game_idx = 0;			// index of game to load
 	int game_num = 0;			// file number of game to load
 	char game_descr[DESCRIP_MAX] = {0};	// save-game description
-	char fname[_MAX_NAME + _MAX_EXT];	// for generating filename to delete
-	int rc;				// return code
 
 	/*
 	**	Buttons
@@ -432,28 +430,16 @@ void LoadReplayClass::Fill_List(ListClass* list)
 		*/
 		id = id++;
 
-		/*
-		**	get the game's info; if success, add it to the list
-		*/
-		//bool ok = Get_Savefile_Info(id, descr, &scenario, &house);
-		// TODO implement replay file checking
-		bool ok = true;
-
-
 		fdata = new ReplayFileEntryClass;
 
-		fdata->Descr[0] = ' ';
-
-		if (!ok) {
-			sprintf(fdata->Descr, "(%s) ", "Incompatible");
-		}
+		fdata->Descr[0] = '\0';
 
 		strncat(fdata->Descr, ff.name, (sizeof(fdata->Descr) - strlen(fdata->Descr)) - 1);
-		fdata->Valid = ok;
-		fdata->Scenario = 0;	//scenario;
-		fdata->House = (HousesType)0;	//house;
+		fdata->Valid = true;
+		fdata->Scenario = 0;
+		fdata->House = (HousesType)0;
 		fdata->Num = id++;
-		fdata->DateTime = 0;	//ff.GetTime();
+		fdata->DateTime = 0;
 		Files.Add(fdata);
 
 		/*
