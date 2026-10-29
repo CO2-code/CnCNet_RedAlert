@@ -509,6 +509,10 @@ int Main_Menu(unsigned long )
 	int	d_replay_h = 9 * RESFACTOR;
 	int	d_replay_x = 102 * RESFACTOR;
 
+	int	d_record_w = 118 * RESFACTOR;
+	int	d_record_h = 9 * RESFACTOR;
+	int	d_record_x = 102 * RESFACTOR;
+
 	int	d_multi_w = 118 * RESFACTOR;
 	int	d_multi_h = 9 * RESFACTOR;
 	int	d_multi_x = 102 * RESFACTOR;
@@ -525,7 +529,7 @@ int Main_Menu(unsigned long )
 
 //#if defined(WIN32) && !defined(INTERNET_OFF) // Denzil 5/1/98 - No internet play
 //#ifndef FIXIT_VERSION_3
-	static int	max_buttons = 8;
+	static int	max_buttons = 9;
 //#else
 //	static int	max_buttons = 6;
 //#endif
@@ -544,6 +548,7 @@ int Main_Menu(unsigned long )
 		BUTTON_START,
 		BUTTON_LOAD,
 		BUTTON_REPLAY,
+		BUTTON_RECORD,
 		BUTTON_MULTI,
 		BUTTON_INTRO,
 		BUTTON_EXIT,
@@ -560,6 +565,7 @@ int Main_Menu(unsigned long )
 //#endif
 		BUTTON_LOAD,
 		BUTTON_REPLAY,
+		BUTTON_RECORD,
 		BUTTON_MULTI,
 		BUTTON_INTRO,
 		BUTTON_EXIT,
@@ -582,7 +588,7 @@ int Main_Menu(unsigned long )
 	KeyNumType input;								// input from user
 	int retval;										// return value
 	int curbutton;
-	TextButtonClass * buttons[8];
+	TextButtonClass * buttons[9];
 	unsigned long starttime;
 
 	/*
@@ -636,6 +642,9 @@ int Main_Menu(unsigned long )
 	TextButtonClass replaybtn(BUTTON_REPLAY, TXT_LOAD_MISSION, TPF_BUTTON, d_replay_x, starty, d_replay_w, d_replay_h);
 	starty += ystep;
 
+	TextButtonClass recordbtn(BUTTON_RECORD, TXT_SAVE_MISSION, TPF_BUTTON, d_record_x, starty, d_record_w, d_record_h);
+	starty += ystep;
+
 	TextButtonClass multibtn(BUTTON_MULTI, TXT_MULTIPLAYER_GAME, TPF_BUTTON, d_multi_x, starty, d_multi_w, d_multi_h);
 	starty += ystep;
 
@@ -679,6 +688,7 @@ int Main_Menu(unsigned long )
 //#endif
 	loadbtn.Add_Tail(*commands);
 	replaybtn.Add_Tail(*commands);
+	recordbtn.Add_Tail(*commands);
 	multibtn.Add_Tail(*commands);
 	introbtn.Add_Tail(*commands);
 	exitbtn.Add_Tail(*commands);
@@ -694,9 +704,10 @@ int Main_Menu(unsigned long )
 	buttons[2] = &startbtn;
 	buttons[3] = &loadbtn;
 	buttons[4] = &replaybtn;
-	buttons[5] = &multibtn;
-	buttons[6] = &introbtn;
-	buttons[7] = &exitbtn;
+	buttons[5] = &recordbtn;
+	buttons[6] = &multibtn;
+	buttons[7] = &introbtn;
+	buttons[8] = &exitbtn;
 #else
 	if (expansions) {
 		curbutton = 0;
@@ -709,9 +720,10 @@ int Main_Menu(unsigned long )
 	buttons[2] = &internetbutton;
 	buttons[3] = &loadbtn;
 	buttons[4] = &replaybtn;
-	buttons[5] = &multibtn;
-	buttons[6] = &introbtn;
-	buttons[7] = &exitbtn;
+	buttons[5] = &recordbtn;
+	buttons[6] = &multibtn;
+	buttons[7] = &introbtn;
+	buttons[8] = &exitbtn;
 #endif
 
 	buttons[curbutton]->Turn_On();
@@ -886,6 +898,12 @@ int Main_Menu(unsigned long )
 				break;
 
 			case (BUTTON_REPLAY | KN_BUTTON):
+				retval = (input & 0x7FFF) - BUTTON_EXPAND;
+				process = false;
+				break;
+
+			case (BUTTON_RECORD | KN_BUTTON):
+				Session.Record = true;
 				retval = (input & 0x7FFF) - BUTTON_EXPAND;
 				process = false;
 				break;
