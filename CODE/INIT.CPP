@@ -447,15 +447,16 @@ bool Select_Game(bool fade)
 	//	Enums in Select_Game() must match order of buttons in Main_Menu().
 
 	/*
-	**	If we just returned from a CnCNet Spawner match, close the game
-	**	completely instead of returning to the main menu.
+	**	If we just returned from a CnCNet Spawner match, return to the main
+	**	menu so the user can load and watch the replay via the "Load Replay"
+	**	button. Don't close the game.
 	*/
 	if (!LaunchedFromSpawner && Spawner.Active) {
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
-			"Select_Game: spawner match ended, closing game");
+			"Select_Game: spawner match ended, returning to main menu");
 		Spawner.Active = false;
 		SpawnerActive = false;
-		return(false);
+		/* Fall through to main menu - user can click "Load Replay" */
 	}
 
 #ifdef FIXIT_VERSION_3
