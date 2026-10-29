@@ -52,7 +52,7 @@
 #include "function.h"
 #include <dos.h>			// for station ID computation
 #include <time.h>			// for station ID computation
-#include <direct.h>		// for _mkdir
+#include <windows.h>		// for CreateDirectory
 
 extern bool LaunchedFromSpawner;
 
@@ -188,7 +188,7 @@ SessionClass::SessionClass(void)
 	WWChat = 0;
 
 	RecordFile.Set_Name("replays\\RECORD.BIN");	// replays subfolder
-	_mkdir("replays");
+	CreateDirectory("replays", NULL);
 	Record= 0;										// set via command line
 	Play = 0;										// set via command line
 	Attract = 0;									// set via command line
