@@ -907,14 +907,31 @@ int Main_Menu(unsigned long )
 
 			case (BUTTON_RECORD | KN_BUTTON):
 				Session.Record = true;
+				/* Generate unique replay filename: replays/game-YYYY-MM-DD-HH-MM-SS.replay */
+				{
+					char buf[1024];
+					memset(buf, 0, sizeof(buf));
+					time_t t;
+					time(&t);
+					struct tm* tm = localtime(&t);
+					sprintf(buf, "replays\game-%d-%d-%d-%d-%d-%d.replay",
+							tm->tm_year + 1900,
+								tm->tm_mon + 1,
+								tm->tm_mday,
+								tm->tm_hour,
+								tm->tm_min,
+								tm->tm_sec);
+					Session.RecordFile.Set_Name(buf);
+				}
 				/* Open recording file and save initial values */
 				if (Session.RecordFile.Open(WRITE)) {
 					Save_Recording_Values(Session.RecordFile);
+					Session.RecordFile.Close();
 				} else {
 					Session.Record = false;
 				}
-				/* Return SEL_START_NEW_GAME so game starts normally with recording */
-				retval = BUTTON_START - BUTTON_EXPAND;
+				/* retval should start a new game with recording enabled */
+				retval = SEL_START_NEW_GAME;
 				process = false;
 				break;
 
