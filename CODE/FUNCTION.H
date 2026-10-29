@@ -1029,5 +1029,7 @@ class DynamicVectorClass<ActionChoiceClass *>;
 extern DynamicVectorClass<ActionChoiceClass *> xxx3;
 class DynamicVectorClass<EgoClass *>;
 extern DynamicVectorClass<EgoClass *> whatever;
+class DynamicVectorClass<ReplayFileEntryClass *>;
+extern DynamicVectorClass<ReplayFileEntryClass *> whatever2;
 
 #endif
