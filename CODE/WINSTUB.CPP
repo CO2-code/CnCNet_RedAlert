@@ -163,8 +163,8 @@ void Check_For_Focus_Loss(void)
 
 extern BOOL InMovie;
 
-#ifndef WM_MOUSEHWHEEL
-#define WM_MOUSEHWHEEL 0x020E
+#ifndef WM_MOUSEWHEEL
+#define WM_MOUSEWHEEL 0x020A
 #endif
 
 long FAR PASCAL _export Windows_Procedure(HWND hwnd, UINT message, UINT wParam, LONG lParam)
@@ -229,11 +229,11 @@ long FAR PASCAL _export Windows_Procedure(HWND hwnd, UINT message, UINT wParam, 
 
 			/*
 		**	CnCNet Spawner: mouse wheel sidebar scrolling.
-		**	Horizontal mouse wheel scrolls the build sidebar left/right.
+		**	Mouse wheel scrolls the build sidebar up/down.
 		*/
-		case WM_MOUSEHWHEEL:
+		case WM_MOUSEWHEEL:
 			if (Options.MouseWheelScrolling && PlayerPtr) {
-				short delta = (short)HIWORD(lParam);
+				short delta = (short)HIWORD(wParam);
 				if (delta > 0) {
 					Map.SidebarClass::Scroll(true, -1);
 				} else if (delta < 0) {
