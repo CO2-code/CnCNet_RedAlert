@@ -44,6 +44,7 @@ extern bool Load_Recording_Values(CCFileClass & file);
 #include "ccdde.h"
 #else	//WIN32
 #include	<sys\timeb.h>
+#include <time.h>
 #endif
 
 /*****************************
@@ -931,7 +932,7 @@ int Main_Menu(unsigned long )
 					Session.Record = false;
 				}
 				/* retval should start a new game with recording enabled */
-				retval = SEL_START_NEW_GAME;
+				retval = BUTTON_START - BUTTON_EXPAND;
 				process = false;
 				break;
 
