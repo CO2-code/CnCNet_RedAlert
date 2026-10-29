@@ -628,11 +628,17 @@ bool Select_Game(bool fade)
 #endif
 
 		if (LaunchedFromSpawner) {
+			/* Reset spawner state from any previous session so a retry
+			** after a failed connection doesn't hit the duplicate-init guard. */
+			SpawnerActive = false;
 			RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Select_Game: entering Spawner startup");
 			if (!Read_Spawner_Game_Options_And_Launch_Match()) {
 				RA_DiagLog_Write(RA_DIAG_LOG_ERROR, "Select_Game: Spawner initialization failed");
 				return(false);
 			}
+			/* Mark the spawner launch as consumed; subsequent Select_Game
+			** calls must not re-enter spawner startup. */
+			LaunchedFromSpawner = false;
 			RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Select_Game: Spawner settings loaded; proceeding with common startup");
 			process = false;
 			display = false;
@@ -1833,6 +1839,18 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		int tunnelServerPort = spawnini.Get_Int("Tunnel", "Port", 0) & 0xFFFF;
 		int tunnelId = spawnini.Get_Int("Settings", "Port", 0) & 0xFFFF;
 		Spawner_Set_Tunnel(tunnelAddress, htons((unsigned short)tunnelServerPort), htons((unsigned short)tunnelId));
+		if (tunnelServerPort != 0) {
+			RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+				"Spawner tunnel: ip=%s port=%d id=%d",
+				tunnelIp[0] != 0 ? tunnelIp : "(none)",
+				tunnelServerPort, tunnelId);
+			if (tunnelAddress == 0) {
+				RA_DiagLog_Write(RA_DIAG_LOG_ERROR,
+					"Spawner: tunnel port is set but no tunnel server IP; packets cannot reach the tunnel");
+				WWMessageBox().Process("CnCNet Spawner: a tunnel server port is configured but no tunnel server IP address was found in SPAWN.INI. Online play will not work without a tunnel IP.", TXT_OK);
+				return(false);
+			}
+		}
 	}
 
 	Session.Type = GAME_SKIRMISH;

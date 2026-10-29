@@ -426,9 +426,21 @@ long UDPInterfaceClass::Message_Handler(HWND, UINT message, UINT, LONG lParam)
 				** packet and routes it directly or through the tunnel server.
 				*/
 				rc = Spawner_Send_Packet(Socket, packet->Address, packet->Buffer, packet->BufferLen);
-				if (rc < 0 && WSAGetLastError() == WSAEWOULDBLOCK) {
+				if (rc < 0) {
+					int err = WSAGetLastError();
+					if (err == WSAEWOULDBLOCK) {
+						Clear_Socket_Error (Socket);
+						return (0);
+					}
+					/* A real socket error (e.g. unreachable tunnel server, bad address).
+					** Log it and drop the packet so the caller is not blocked forever,
+					** but do not pretend the send succeeded. */
 					Clear_Socket_Error (Socket);
-					return (0);
+					RA_DiagLog_Write(RA_DIAG_LOG_ERROR,
+						"Spawner: send packet failed (error=%d), dropping", err);
+					OutBuffers.Delete ( packetnum );
+					delete packet;
+					return(0);
 				}
 				OutBuffers.Delete ( packetnum );
 				delete packet;
