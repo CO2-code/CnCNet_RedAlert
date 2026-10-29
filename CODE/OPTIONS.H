@@ -94,6 +94,7 @@ class OptionsClass {
 		unsigned IsScoreRepeat:1;	// Score should repeat?
 		unsigned IsScoreShuffle:1;	// Score list should shuffle?
 		unsigned IsPaletteScroll:1;// Allow palette scrolling?
+		unsigned ShortGame:1;		// Short game mode (defeat when no buildings + no MCV)
 
 		/*
 		**	These are the hotkeys used for keyboard control.

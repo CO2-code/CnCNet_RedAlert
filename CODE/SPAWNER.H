@@ -66,6 +66,11 @@ struct SpawnerSettingsType {
 	bool Active;
 
 	/*
+	**	True if the local player is the game host (controls game options).
+	*/
+	bool PlayerIsGameHost;
+
+	/*
 	**	True if the match was created by CnCNet's quick match system.
 	*/
 	bool QuickMatch;

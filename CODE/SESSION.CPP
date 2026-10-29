@@ -53,6 +53,8 @@
 #include <dos.h>			// for station ID computation
 #include <time.h>			// for station ID computation
 
+extern bool LaunchedFromSpawner;
+
 //#include "WolDebug.h"
 
 /***************************** Globals *************************************/
@@ -1440,7 +1442,9 @@ void SessionClass::Read_Scenario_Descriptions (void)
 	char name_buffer[128];
 	char digest_buffer[32];
 
-	handle = FindFirstFile ( "*.MPR" , &block );
+	char const * map_ext = LaunchedFromSpawner ? "*.MMM" : "*.MPR";
+
+	handle = FindFirstFile ( map_ext , &block );
 	while (handle != INVALID_HANDLE_VALUE) {
 		if ((block.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_TEMPORARY)) == 0) {
 			file_name = &block.cAlternateFileName[0];
@@ -1497,7 +1501,7 @@ void SessionClass::Read_Scenario_Descriptions (void)
 	** Scan the current directory for any loose .MPR files and build the appropriate entries
 	**  into the scenario list list
 	*/
-	if (_dos_findfirst("*.MPR", _A_NORMAL, &block) == 0) {
+	if (_dos_findfirst(map_ext, _A_NORMAL, &block) == 0) {
 		do {
 			CCFileClass file(block.name);
 			INIClass ini;

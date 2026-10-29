@@ -1883,7 +1883,14 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	**	executable does with the same SPAWN.INI key.
 	*/
 	AftermathFastBuildSpeed = spawnini.Get_Bool("Settings", "AftermathFastBuildSpeed", false);
+	Spawner.PlayerIsGameHost = spawnini.Get_Bool("Settings", "PlayerIsGameHost", true);
 	BuildLevel = spawnini.Get_Int("Settings", "TechLevel", 10);
+
+	/* CnCNet Spawner: apply game-fix options from SPAWN.INI. These override
+	** the values from RULES.INI for the duration of the spawned match. */
+	Rule.IsAllyReveal = spawnini.Get_Bool("Settings", "AllyReveal", Rule.IsAllyReveal);
+	Rule.IsMCVDeploy = spawnini.Get_Bool("Settings", "MCVUndeploy", Rule.IsMCVDeploy);
+	Options.ShortGame = spawnini.Get_Bool("Settings", "ShortGame", false);
 
 	int aiDifficulty = spawnini.Get_Int("Settings", "AIDifficulty", 2);
 	Scen.Difficulty = DIFF_NORMAL;
