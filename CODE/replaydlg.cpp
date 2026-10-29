@@ -301,14 +301,12 @@ int LoadReplayClass::Process(void)
 		*/
 		if (input == KN_RETURN || input == (BUTTON_EDIT | KN_BUTTON)) {
 			ToggleClass* toggle = NULL;
-				input = (KeyNumType)(BUTTON_LOAD | KN_BUTTON);
-				cancelbtn.Turn_Off();
-				toggle = (ToggleClass*)commands->Extract_Gadget(BUTTON_LOAD);
-				if (toggle != NULL) {
-					toggle->IsOn = true;
-					toggle->IsPressed = true;
-				}
-
+			input = (KeyNumType)(BUTTON_LOAD | KN_BUTTON);
+			cancelbtn.Turn_Off();
+			toggle = (ToggleClass*)commands->Extract_Gadget(BUTTON_LOAD);
+			if (toggle != NULL) {
+				toggle->IsOn = true;
+				toggle->IsPressed = true;
 			}
 			Hide_Mouse();
 			commands->Draw_All(true);
@@ -447,7 +445,7 @@ void LoadReplayClass::Fill_List(ListClass* list)
 
 		fdata = new ReplayFileEntryClass;
 
-		fdata->Descr[0] = '\0';
+		fdata->Descr[0] = ' ';
 
 		if (!ok) {
 			sprintf(fdata->Descr, "(%s) ", "Incompatible");
