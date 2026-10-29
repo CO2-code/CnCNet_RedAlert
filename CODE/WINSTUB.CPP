@@ -232,8 +232,8 @@ long FAR PASCAL _export Windows_Procedure(HWND hwnd, UINT message, UINT wParam, 
 		**	Horizontal mouse wheel scrolls the build sidebar left/right.
 		*/
 		case WM_MOUSEHWHEEL:
-			if (Options.MouseWheelScrolling) {
-				short delta = (short)HIWORD(wParam);
+			if (Options.MouseWheelScrolling && PlayerPtr) {
+				short delta = (short)HIWORD(lParam);
 				if (delta > 0) {
 					Map.SidebarClass::Scroll(true, -1);
 				} else if (delta < 0) {

@@ -3207,7 +3207,11 @@ BulletClass * TechnoClass::Fire_At(TARGET target, int which)
 				tech->Clicked_As_Target(4);
 			}
 
-			Delay(1);	// Make sure line is visible briefly
+			/* CnCNet Spawner: skip the Tesla zap effect delay when enabled,
+			** preventing lag from repeated Tesla coil/tank zaps. */
+			if (!Rule.NoTeslaZapEffectDelay) {
+				Delay(1);	// Make sure line is visible briefly
+			}
 			if (gonnadraw) {
 				Map.Flag_To_Redraw(true);
 			}
