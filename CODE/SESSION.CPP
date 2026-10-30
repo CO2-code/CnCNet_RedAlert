@@ -692,6 +692,12 @@ SessionClass::Load(CCFileClass & file)
 	file.Read(&EmergencySave, sizeof(EmergencySave));
 
 	file.Read(&count, sizeof(count));
+
+	for (i = 0; i < Players.Count(); i++) {
+		delete Players[i];
+	}
+	Players.Clear();
+
 	for (i = 0; i < count; i++) {
 		node = new NodeNameType;
 		file.Read(node, sizeof(NodeNameType));
