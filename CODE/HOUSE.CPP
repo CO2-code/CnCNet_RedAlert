@@ -6576,7 +6576,7 @@ void HouseClass::Become_Spectator(void)
  *=============================================================================================*/
 bool Player_Is_Spectator(void)
 {
-	return(PlayerPtr != NULL && PlayerPtr->IsSpectator);
+	return(Session.Play || (PlayerPtr != NULL && PlayerPtr->IsSpectator));
 }
 
 
