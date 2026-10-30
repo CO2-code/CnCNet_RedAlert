@@ -1229,10 +1229,10 @@ bool Select_Game(bool fade)
 					case SELECT_LOAD_REPLAY: {
 						if (LoadReplayClass().Process()) {
 							if (Session.RecordFile.Open(READ)) {
+								Load_Recording_Values(Session.RecordFile);
 								Session.Play = true;
 								Session.Attract = false;
 								Session.Record = false;
-								Load_Recording_Values(Session.RecordFile);
 								process = false;
 								Theme.Fade_Out();
 							} else {
@@ -2137,11 +2137,6 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 				tm->tm_min,
 				tm->tm_sec);
 		Session.RecordFile.Set_Name(buf);
-		if (Session.RecordFile.Open(WRITE)) {
-			Save_Recording_Values(Session.RecordFile);
-		} else {
-			Session.Record = false;
-		}
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
 			"Spawner: recording match to %s", buf);
 	}
@@ -2153,7 +2148,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	if (replayFile[0] != 0) {
 		char buf[1024];
 		memset(buf, 0, sizeof(buf));
-		sprintf(buf, "replays\%s", replayFile);
+		sprintf(buf, "replays\\%s", replayFile);
 		Session.RecordFile.Set_Name(buf);
 		Session.Play = true;
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
