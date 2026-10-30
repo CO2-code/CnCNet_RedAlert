@@ -2797,9 +2797,11 @@ void Assign_Houses(void)
 	*/
 	Spawner_Apply_House_Overrides();
 
-	/* Replay playback uses the local player as a spectator. */
-	if (Session.Play && PlayerPtr != NULL) {
-		PlayerPtr->Become_Spectator();
+	/* Replay playback reveals the map without changing the recorded player's house state. */
+	if (Session.Play) {
+		Session.ObiWan = 1;
+		Debug_Unshroud = true;
+		Map.Flag_To_Redraw(true);
 	}
 }
 
