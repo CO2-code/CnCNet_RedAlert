@@ -80,6 +80,8 @@ class OptionsClass {
 		*/
 		unsigned int GameSpeed;
 
+		bool AutoSaveReplays;	// Auto-save a replay of each match?
+
 		int ScrollRate;		// Distance to scroll.
 		fixed Volume;			// Volume for sound effects.
 		fixed ScoreVolume;	// Volume for scores.

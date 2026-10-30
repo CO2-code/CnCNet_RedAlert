@@ -105,6 +105,7 @@ OptionsClass::OptionsClass(void) :
 	Saturation(fixed::_1_2),
 	Contrast(fixed::_1_2),
 	AutoScroll(true),
+	AutoSaveReplays(true),
 	IsScoreRepeat(false),
 	IsScoreShuffle(false),
 	IsPaletteScroll(true),
@@ -595,6 +596,7 @@ void OptionsClass::Load_Settings(void)
 	Set_Saturation(ini.Get_Fixed(OPTIONS, "Color", Saturation));
 	Set_Tint(ini.Get_Fixed(OPTIONS, "Tint", Tint));
 	AutoScroll = ini.Get_Bool(OPTIONS, "AutoScroll", AutoScroll);
+	AutoSaveReplays = ini.Get_Bool(OPTIONS, "AutoSaveReplays", AutoSaveReplays);
 	Set_Repeat(ini.Get_Bool(OPTIONS, "IsScoreRepeat", IsScoreRepeat));
 	Set_Shuffle(ini.Get_Bool(OPTIONS, "IsScoreShuffle", IsScoreShuffle));
 	SlowPalette = ini.Get_Bool(OPTIONS, "SlowPalette", SlowPalette);
@@ -775,6 +777,7 @@ void OptionsClass::Save_Settings (void)
 	ini.Put_Fixed(OPTIONS, "Color", Saturation);
 	ini.Put_Fixed(OPTIONS, "Tint", Tint);
 	ini.Put_Bool(OPTIONS, "AutoScroll", AutoScroll);
+	ini.Put_Bool(OPTIONS, "AutoSaveReplays", AutoSaveReplays);
 	ini.Put_Bool(OPTIONS, "IsScoreRepeat", IsScoreRepeat);
 	ini.Put_Bool(OPTIONS, "IsScoreShuffle", IsScoreShuffle);
 	ini.Put_Bool(OPTIONS, "PaletteScroll", IsPaletteScroll);

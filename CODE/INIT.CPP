@@ -441,6 +441,200 @@ extern bool Get_Broadcast_Addresses (void);
  * HISTORY:                                                                                    *
  *   06/05/1995 BRR : Created.                                                                 *
  *=============================================================================================*/
+LoadMenuType Select_Load_Menu_Type(void)
+{
+	/*------------------------------------------------------------------------
+	**	Dialog & button dimensions
+	**------------------------------------------------------------------------
+	int d_dialog_w = 190 * RESFACTOR;
+	int d_dialog_h = 78 * RESFACTOR;
+	int d_dialog_y = 90 * RESFACTOR;
+	int d_dialog_x = ((320 * RESFACTOR - d_dialog_w) / 2);
+	int d_dialog_cx = d_dialog_x + (d_dialog_w / 2);
+
+	int d_txt6_h = 7 * RESFACTOR;
+	int d_margin = 7 * RESFACTOR;
+
+	int d_loadgame_w = 80 * RESFACTOR;
+	int d_loadgame_h = 9 * RESFACTOR;
+	int d_loadgame_x = d_dialog_x;
+	int d_loadgame_y = d_dialog_y + d_margin + d_txt6_h + d_margin;
+
+	int d_loadreplay_w = 80 * RESFACTOR;
+	int d_loadreplay_h = 9 * RESFACTOR;
+	int d_loadreplay_x = d_dialog_cx - d_loadreplay_w / 2;
+	int d_loadreplay_y = d_loadgame_y + d_loadgame_h + 2 * RESFACTOR;
+
+	int d_cancel_w = 60 * RESFACTOR;
+	int d_cancel_h = 13 * RESFACTOR;
+	int d_cancel_x = d_dialog_cx + d_margin;
+	int d_cancel_y = d_loadreplay_y + d_loadreplay_h + d_margin;
+
+	/*------------------------------------------------------------------------
+	**	Buttons
+	**------------------------------------------------------------------------
+	ControlClass * commands = NULL; // the button list
+
+	TextButtonClass loadgamebtn(
+		BUTTON_LOAD_GAME, TXT_LOAD_MISSION, TPF_BUTTON,
+		d_loadgame_x, d_loadgame_y, d_loadgame_w, d_loadgame_h);
+
+	TextButtonClass loadreplaybtn(
+		BUTTON_LOAD_REPLAY, "Load Replay", TPF_BUTTON,
+		d_loadreplay_x, d_loadreplay_y, d_loadreplay_w, d_loadreplay_h);
+
+	TextButtonClass cancelbtn(BUTTON_CANCEL, TXT_CANCEL, TPF_BUTTON,
+			d_cancel_x, d_cancel_y, d_cancel_w, d_cancel_h);
+
+	/*------------------------------------------------------------------------
+	**	Initialize
+	**------------------------------------------------------------------------
+	Set_Logic_Page(SeenBuff);
+	VisiblePage.Blit(seen_buff_save);
+	//------------------------------------------------------------------------
+	//	Create the list
+	**------------------------------------------------------------------------
+	commands = &loadgamebtn;
+	loadreplaybtn.Add_Tail(*commands);
+	cancelbtn.Add_Tail(*commands);
+
+	/*------------------------------------------------------------------------
+	**	Fill array of button ptrs
+	**------------------------------------------------------------------------
+	curbutton = 0;
+	buttons[0] = &loadgamebtn;
+	buttons[1] = &loadreplaybtn;
+	buttons[2] = &cancelbtn;
+	buttons[curbutton]->Turn_On();
+
+	Keyboard->Clear();
+
+	Fancy_Text_Print(TXT_NONE, 0, 0, GadgetClass::Get_Color_Scheme(),
+		TBLACK, TPF_CENTER | TPF_TEXT);
+
+	Theme.Queue_Song(THEME_FIRST);
+
+	/*------------------------------------------------------------------------
+	**	Main Processing Loop
+	**------------------------------------------------------------------------
+	display = REDRAW_ALL;
+	process = true;
+	pressed = false;
+	while (process) {
+
+		/*	Invoke game callback
+		*/
+		Call_Back();
+
+		/*	Refresh display if needed
+		*/
+		if (display) {
+
+			/*	Draw the dialog box
+			*/
+			Hide_Mouse();
+			Dialog_Box(d_dialog_x, d_dialog_y, d_dialog_w, d_dialog_h);
+			Draw_Caption("Load Replay", d_dialog_x, d_dialog_y, d_dialog_w);
+
+			/*	Redraw buttons
+			*/
+			if (display >= REDRAW_BUTTONS) {
+				commands->Flag_List_To_Redraw();
+			}
+			Show_Mouse();
+			display = false;
+		}
+
+		/*	Get user input
+		*/
+		input = commands->Input();
+
+		/*	Process input
+		*/
+		switch (input) {
+			case (BUTTON_LOAD_GAME | KN_BUTTON):
+				selection = BUTTON_LOAD_GAME;
+				pressed = true;
+				break;
+
+			case (BUTTON_LOAD_REPLAY | KN_BUTTON):
+				selection = BUTTON_LOAD_REPLAY;
+				pressed = true;
+				break;
+
+			case (KN_ESC):
+			case (BUTTON_CANCEL | KN_BUTTON):
+				selection = BUTTON_CANCEL;
+				pressed = true;
+				break;
+
+			case KN_UP:
+				buttons[curbutton]->Turn_Off();
+				buttons[curbutton]->Flag_To_Redraw();
+				curbutton--;
+				if (curbutton < 0)
+					curbutton = (NUM_OF_BUTTONS - 1);
+				buttons[curbutton]->Turn_On();
+				buttons[curbutton]->Flag_To_Redraw();
+				break;
+
+			case KN_DOWN:
+				buttons[curbutton]->Turn_Off();
+				buttons[curbutton]->Flag_To_Redraw();
+				curbutton++;
+				if (curbutton > (NUM_OF_BUTTONS - 1))
+					curbutton = 0;
+				buttons[curbutton]->Turn_On();
+				buttons[curbutton]->Flag_To_Redraw();
+				break;
+
+			case KN_RETURN:
+				selection = curbutton + BUTTON_LOAD_GAME;
+				pressed = true;
+				break;
+
+			default:
+				break;
+		}
+
+		if (pressed) {
+
+			/*	To make sure the selection is correct in case they used the mouse
+			*/
+			buttons[curbutton]->Turn_Off();
+			buttons[curbutton]->Flag_To_Redraw();
+			curbutton = selection - BUTTON_LOAD_GAME;
+			if (selection == BUTTON_CANCEL)
+				curbutton--;
+			buttons[curbutton]->Turn_On();
+			buttons[curbutton]->IsPressed = true;
+			buttons[curbutton]->Draw_Me(true);
+
+			switch (selection) {
+			case (BUTTON_LOAD_GAME):
+				retval = SELECT_LOAD_SAVEGAME;
+				process = false;
+				break;
+
+			case (BUTTON_LOAD_REPLAY):
+				retval = SELECT_LOAD_REPLAY;
+				process = false;
+				break;
+
+			case (BUTTON_CANCEL):
+				retval = SELECT_CANCEL;
+				process = false;
+				break;
+		}
+
+			pressed = false;
+		}
+
+		return (retval);
+	}
+
+	}	/* end of Select_Load_Menu_Type() */
+
 bool Select_Game(bool fade)
 {
 	//	Enums in Select_Game() must match order of buttons in Main_Menu().
@@ -464,6 +658,7 @@ bool Select_Game(bool fade)
 		SEL_NEW_SCENARIO_AM,				// Expansion scenario to play.
 		SEL_START_NEW_GAME,			// start a new game
 		SEL_LOAD_MISSION,				// load a saved game
+		SEL_LOAD_REPLAY,				// load a recorded game
 		SEL_MULTIPLAYER_GAME,		// play modem/null-modem/network game
 		SEL_INTRO,						// couch-potato mode
 		SEL_EXIT,						// exit to DOS
@@ -482,6 +677,7 @@ bool Select_Game(bool fade)
 //		SEL_MOVIESETTINGS,
 //#endif
 		SEL_LOAD_MISSION,				// load a saved game
+		SEL_LOAD_REPLAY,				// load a recorded game
 		SEL_MULTIPLAYER_GAME,		// play modem/null-modem/network game
 		SEL_INTRO,						// couch-potato mode
 		SEL_EXIT,						// exit to DOS
@@ -974,6 +1170,19 @@ bool Select_Game(bool fade)
 					} else {
 						display = true;
 						selection = SEL_NONE;
+					}
+					break;
+
+				case SEL_LOAD_REPLAY:
+					{
+						LoadMenuType lmt = Select_Load_Menu_Type();
+						if (lmt == SELECT_LOAD_REPLAY) {
+							process = false;
+							gameloaded = true;
+						} else {
+							display = true;
+							selection = SEL_NONE;
+						}
 					}
 					break;
 
@@ -1840,6 +2049,45 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	}
 	PlanetWestwoodGameID = (unsigned long)spawnini.Get_Int("Settings", "GameID", 0);
 	Spawner_Set_Game_Id(PlanetWestwoodGameID);
+
+	/* CnCNet Spawner: record match to replay file */
+	Session.Record = spawnini.Get_Bool("Settings", "Record", Session.Record);
+	if (Session.Record) {
+		char buf[1024];
+		memset(buf, 0, sizeof(buf));
+		time_t t;
+		time(&t);
+		struct tm* tm = localtime(&t);
+		sprintf(buf, "replays/game-%d-%d-%d-%d-%d-%d.replay",
+				tm->tm_year + 1900,
+				tm->tm_mon + 1,
+				tm->tm_mday,
+				tm->tm_hour,
+				tm->tm_min,
+				tm->tm_sec);
+		Session.RecordFile.Set_Name(buf);
+		if (Session.RecordFile.Open(WRITE)) {
+			Save_Recording_Values(Session.RecordFile);
+		} else {
+			Session.Record = false;
+		}
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+			"Spawner: recording match to %s", buf);
+	}
+
+	/* CnCNet Spawner: play back a replay file specified in SPAWN.INI.
+	** Can be used by CnCNet client to automatically play a recorded match. */
+	char replayFile[1024];
+	spawnini.Get_String("Settings", "PlayReplay", "", replayFile, sizeof(replayFile));
+	if (replayFile[0] != 0) {
+		char buf[1024];
+		memset(buf, 0, sizeof(buf));
+		sprintf(buf, "replays\%s", replayFile);
+		Session.RecordFile.Set_Name(buf);
+		Session.Play = true;
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+			"Spawner: playing back replay %s", buf);
+	}
 
 	/*
 	**	Tunnel server. When a tunnel port is given all traffic is relayed through the tunnel

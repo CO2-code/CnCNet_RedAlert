@@ -532,6 +532,7 @@ void Unselect_All(void);
 void Play_Movie(char const * name, ThemeType theme=THEME_NONE, bool clrscrn=true);
 void Play_Movie(VQType name, ThemeType theme=THEME_NONE, bool clrscrn=true);
 bool Main_Loop(void);
+void Exit_Session(void);
 TheaterType Theater_From_Name(char const * name);
 void Main_Game(int argc, char * argv[]);
 long VQ_Call_Back(unsigned char * buffer=NULL, long frame=0);

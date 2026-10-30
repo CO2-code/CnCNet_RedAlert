@@ -217,6 +217,24 @@ void Check_Mirror(void);
 
 
 /***************************************************************************
+ * Exit_Session -- Leaves the current game session cleanly.                *
+ *                                                                         *
+ * Used both by the normal EXIT event and by replay playback, where the    *
+ * exit event is never read from the queue.                                *
+ *=========================================================================*/
+void Exit_Session(void)
+{
+	Theme.Queue_Song(THEME_NONE);
+	Stop_Speaking();
+	Speak(VOX_CONTROL_EXIT);
+	while (Is_Speaking()) {
+		Call_Back();
+	}
+	GameActive = false;
+}
+
+
+/***************************************************************************
  * Queue_Mission -- Queue a mega mission event.                            *
  *                                                                         *
  * This routine is called when the player causes a change to a game unit. 	*
@@ -300,6 +318,14 @@ bool Queue_Mission(TargetClass whom, MissionType mission, TARGET target, TARGET 
  *=========================================================================*/
 bool Queue_Options(void)
 {
+	/*
+	**	If in replay playback allow opening the options menu, bypassing the
+	**	event queue that is being read from the replay file.
+	*/
+	if (Session.Play) {
+		SpecialDialog = SDLG_OPTIONS;
+	}
+
 	if (! OutList.Add(EventClass(EventClass::OPTIONS))) {
 		return(false);
 	}
@@ -327,6 +353,15 @@ bool Queue_Options(void)
  *=========================================================================*/
 bool Queue_Exit(void)
 {
+	/*
+	**	During replay playback the event queue is being read from the replay
+	**	file, so a queued EXIT would never be executed. Leave immediately.
+	*/
+	if (Session.Play) {
+		Exit_Session();
+		return(true);
+	}
+
 	if (! OutList.Add(EventClass(EventClass::EXIT))) {
 		return(false);
 	}
@@ -646,8 +681,13 @@ static void Queue_AI_Multiplayer(void)
 	//------------------------------------------------------------------------
 	//	Compute the Game's CRC
 	//------------------------------------------------------------------------
-	Compute_Game_CRC();
-	CRC[Frame & 0x001f] = GameCRC;
+	/*
+	**	Disabled: Compute_Game_CRC() advances the random number generator, which
+	**	desyncs replays. This per-frame CRC bookkeeping is a C&C1 netcode
+	**	leftover and is not needed by the spawner/match code.
+	*/
+	//Compute_Game_CRC();
+	//CRC[Frame & 0x001f] = GameCRC;
 
 	//------------------------------------------------------------------------
 	//	If we've just started a game, or loaded a multiplayer game, we must
@@ -3704,8 +3744,12 @@ static void Queue_Playback(void)
 	//------------------------------------------------------------------------
 	//	Compute the Game's CRC
 	//------------------------------------------------------------------------
-	Compute_Game_CRC();
-	CRC[Frame & 0x001f] = GameCRC;
+	/*
+	**	Disabled for replay playback: Compute_Game_CRC() advances the random
+	**	number generator and desyncs playback.
+	*/
+	//Compute_Game_CRC();
+	//CRC[Frame & 0x001f] = GameCRC;
 
 	//------------------------------------------------------------------------
 	// If we've reached the CRC print frame, do so & exit

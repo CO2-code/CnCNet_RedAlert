@@ -1084,7 +1084,11 @@ bool SidebarClass::Activate(int control)
 {
 	bool old = IsSidebarActive;
 
-	if (Session.Play)
+	/*
+	**	Only attract mode (a canned demo) forces the sidebar to stay as it is.
+	**	During replay playback the sidebar must work normally.
+	*/
+	if (Session.Attract)
 		return (old);
 
 	/*

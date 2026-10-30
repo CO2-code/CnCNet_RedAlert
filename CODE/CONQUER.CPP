@@ -259,9 +259,10 @@ void Main_Game(int argc, char * argv[])
 		GamePalette.Set(FADE_PALETTE_MEDIUM);
 		Keyboard->Clear();
 		/*
-		** Only show the mouse if we're not playing back a recording.
+		** Only hide the mouse in attract mode. Replay playback keeps the mouse
+		** visible so the options menu can be used while watching a replay.
 		*/
-		if (Session.Play) {
+		if (Session.Attract) {
 			Hide_Mouse();
 			TeamEvent = 0;
 			TeamNumber = 0;
@@ -2345,8 +2346,9 @@ Mono_Set_Cursor(0,0);
 
 	/*
 	**	Update the display, unless we're inside a dialog.
+	**	Attract mode runs a canned demo and must not accept player input.
 	*/
-	if (!Session.Play) {
+	if (!Session.Attract) {
 #ifdef WIN32
 		if (SpecialDialog == SDLG_NONE && GameInFocus) {
 			WWMouse->Erase_Mouse(&HidPage, TRUE);
@@ -2363,9 +2365,12 @@ Mono_Set_Cursor(0,0);
 
 	/*
 	** Save map's position & selected objects, if we're recording the game.
+	**	
+	** Disabled for now for the replay code; the view/selection tracking is not
+	** recorded any more and replaying it desyncs the game.
 	*/
 	if (Session.Record || Session.Play) {
-		Do_Record_Playback();
+		//Do_Record_Playback();
 	}
 
 #ifndef SORTDRAW
