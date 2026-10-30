@@ -64,7 +64,6 @@
 #include "spawner.h"
 #include	"loaddlg.h"
 #include	"REPLAYDLG.H"
-#include	"common/framelimit.h"
 #ifdef WIN32
 #ifdef WINSOCK_IPX
 #include	"WSProto.h"
@@ -694,8 +693,7 @@ LoadMenuType Select_Load_Menu_Type(void)
             pressed = false;
         }
 
-        Frame_Limiter();
-    }
+            }
     return (retval);
 }
 
