@@ -164,7 +164,7 @@ void Dump_Heap_Pointers( void );
 void Error_In_Heap_Pointers( char * string );
 #endif
 void Toggle_Formation(void);
-static void Do_Record_Playback(void);
+void Do_Record_Playback(void);
 
 extern "C" {
 	extern char * __nheapbeg;
@@ -5210,7 +5210,7 @@ unsigned long Disk_Space_Available(void)
 
 
 
-static void Do_Record_Playback(void)
+void Do_Record_Playback(void)
 {
 	int count;
 	TARGET tgt;
