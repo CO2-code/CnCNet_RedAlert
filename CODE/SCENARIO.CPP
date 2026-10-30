@@ -2797,7 +2797,6 @@ void Assign_Houses(void)
 	*/
 	Spawner_Apply_House_Overrides();
 
-	/* Replay playback reveals the map without changing the recorded player's house state. */
 	if (Session.Play) {
 		Session.ObiWan = 1;
 		Debug_Unshroud = true;
