@@ -1819,11 +1819,11 @@ bool Select_Game(bool fade)
 		}
 		Show_Mouse();
 //Mono_Printf("About to call Start Scenario with %s\n", Scen.ScenarioName);
-		char *scenarioToLoad = LaunchedFromSpawner ? SpawnerScenarioName : Scen.ScenarioName;
+		char *scenarioToLoad = (LaunchedFromSpawner && !Session.Play) ? SpawnerScenarioName : Scen.ScenarioName;
 		if (!Start_Scenario(scenarioToLoad)) {
 			return(false);
 		}
-		if (LaunchedFromSpawner && Spawner.Active) {
+		if (LaunchedFromSpawner && Spawner.Active && !Session.Play) {
 			/*
 			**	Everyone in the match must agree on the scenario, rules and executable; fold
 			**	them into the key that protects the match traffic.
@@ -2150,9 +2150,8 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		memset(buf, 0, sizeof(buf));
 		sprintf(buf, "replays\\%s", replayFile);
 		Session.RecordFile.Set_Name(buf);
-		Session.Play = true;
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
-			"Spawner: playing back replay %s", buf);
+			"Spawner: queued replay playback %s", buf);
 	}
 
 	/*
@@ -2442,7 +2441,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		SpawnerSaveLoaded = true;
 		Spawner.LoadedSave = true;
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: save game loaded successfully");
-	} else {
+	} else if (replayFile[0] == 0) {
 		SpawnerScenarioName[0] = 0;
 		spawnini.Get_String("Settings", "Scenario", "", SpawnerScenarioName, sizeof(SpawnerScenarioName));
 		RA_DiagLog_Write(RA_DIAG_LOG_INFO, "Spawner: configured scenario='%s'", SpawnerScenarioName);
@@ -2496,9 +2495,24 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	}
 #endif
 
+	if (replayFile[0] != 0) {
+		if (!Session.RecordFile.Open(READ)) {
+			RA_DiagLog_Write(RA_DIAG_LOG_ERROR,
+				"Spawner: could not open replay file '%s'", replayFile);
+			WWMessageBox().Process("CnCNet Spawner: the requested replay file could not be opened.", TXT_OK);
+			return(false);
+		}
+		Load_Recording_Values(Session.RecordFile);
+		Session.Play = true;
+		Session.Attract = false;
+		Session.Record = false;
+		RA_DiagLog_Write(RA_DIAG_LOG_INFO,
+			"Spawner: replay header loaded; scenario='%s'", Scen.ScenarioName);
+	}
+
 	RA_DiagLog_Write(RA_DIAG_LOG_INFO,
-		"Spawner: options ready; sessionType=%d players=%d scenario='%s'",
-		(int)Session.Type, Session.Players.Count(), SpawnerScenarioName);
+		"Spawner: options ready; sessionType=%d players=%d scenario='%s' replay=%d",
+		(int)Session.Type, Session.Players.Count(), SpawnerScenarioName, Session.Play ? 1 : 0);
 	return(true);
 }
 
