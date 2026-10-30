@@ -61,6 +61,7 @@
 
 #include	"function.h"
 #include "diaglog.h"
+#include "spawner.h"
 #include	"loaddlg.h"
 #ifdef WIN32
 #ifdef WINSOCK_IPX
