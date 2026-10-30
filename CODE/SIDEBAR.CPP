@@ -754,7 +754,9 @@ void SidebarClass::Draw_It(bool complete)
 
 	BStart(BENCH_SIDEBAR);
 
-	if (IsSidebarActive && (IsToRedraw || complete) && !Debug_Map) {
+	bool redraw = IsToRedraw || complete;
+
+	if (IsSidebarActive && redraw && !Debug_Map) {
 		IsToRedraw = false;
 
 		if (LogicPage->Lock()) {
@@ -796,7 +798,7 @@ void SidebarClass::Draw_It(bool complete)
 	**	An observer (CnCNet Spawner) has no production to look at, so the sidebar is used to
 	**	show the live statistics of every player instead.
 	*/
-	if (IsSidebarActive && (complete || IsToRedraw) && Player_Is_Spectator()) {
+	if (IsSidebarActive && redraw && Player_Is_Spectator()) {
 		Draw_Live_Stats();
 	}
 
