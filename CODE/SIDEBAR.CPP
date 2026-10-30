@@ -781,8 +781,10 @@ void SidebarClass::Draw_It(bool complete)
 	**	Draw the side strip elements by calling their respective draw functions.
 	*/
 	if (IsSidebarActive) {
-		Column[0].Draw_It(complete);
-		Column[1].Draw_It(complete);
+		if (!Player_Is_Spectator()) {
+			Column[0].Draw_It(complete);
+			Column[1].Draw_It(complete);
+		}
 
 		if (complete || IsToRedraw) {
 			Repair.Draw_Me(true);
@@ -952,7 +954,7 @@ void SidebarClass::AI(KeyNumType & input, int x, int y)
 		Activate(1);	// Force the sidebar always on in Win95 mode
 	}
 #endif	//WIN32
-	if (!Debug_Map) {
+	if (!Debug_Map && !Player_Is_Spectator()) {
 		Column[0].AI(input, x, y);
 		Column[1].AI(input, x, y);
 	}
