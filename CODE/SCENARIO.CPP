@@ -2796,6 +2796,11 @@ void Assign_Houses(void)
 	**	overrides from SPAWN.INI now that every house exists.
 	*/
 	Spawner_Apply_House_Overrides();
+
+	/* Replay playback uses the local player as a spectator. */
+	if (Session.Play && PlayerPtr != NULL) {
+		PlayerPtr->Become_Spectator();
+	}
 }
 
 
