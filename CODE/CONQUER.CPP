@@ -163,8 +163,6 @@ extern "C" {
 void Dump_Heap_Pointers( void );
 void Error_In_Heap_Pointers( char * string );
 #endif
-static void Do_Record_Playback(void);
-
 void Toggle_Formation(void);
 
 extern "C" {
@@ -5210,23 +5208,7 @@ unsigned long Disk_Space_Available(void)
 }
 
 
-/***********************************************************************************************
- * Do_Record_Playback -- handles saving/loading map pos & current object                       *
- *                                                                                             *
- * INPUT:                                                                                      *
- *		none.																												  *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *		none.																												  *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *		none.																												  *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   08/15/1995 BRR : Created.                                                                 *
- *=============================================================================================*/
-static void Do_Record_Playback(void)
-{
+
 	int count;
 	TARGET tgt;
 	int i;
