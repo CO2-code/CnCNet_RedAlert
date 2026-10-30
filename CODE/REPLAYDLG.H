@@ -15,7 +15,8 @@ class ListClass;
 class ReplayFileEntryClass
 {
 public:
-	char Descr[80];         // replay file name
+	char Descr[80];
+	char FilePath[128];
 	unsigned Scenario;      // scenario #
 	HousesType House;       // house
 	int Num;                // save file number (from the extension)
