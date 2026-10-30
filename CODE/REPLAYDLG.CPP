@@ -314,9 +314,9 @@ void LoadReplayClass::Clear_List(ListClass * list)
 	/*
 	**	Free the replay entries.
 	*/
-	for (int i = 0; i < FileCount; i++) {
-		delete Files[i];
-		Files[i] = NULL;
+	for (int entry = 0; entry < FileCount; entry++) {
+		delete Files[entry];
+		Files[entry] = NULL;
 	}
 	FileCount = 0;
 }
