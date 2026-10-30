@@ -1268,7 +1268,7 @@ void HouseClass::AI(void)
 	**	If a radar facility is not present, but the radar is active, then turn the radar off.
 	**	The radar also is turned off when the power gets below 100% capacity.
 	*/
-	if (PlayerPtr == this && IsSpectator) {
+	if (PlayerPtr == this && Player_Is_Spectator()) {
 
 		/*
 		**	An observer always has a working radar, whether or not there is a radar facility.
@@ -6576,7 +6576,7 @@ void HouseClass::Become_Spectator(void)
  *=============================================================================================*/
 bool Player_Is_Spectator(void)
 {
-	return(PlayerPtr != NULL && PlayerPtr->IsSpectator);
+	return(Session.Play || (PlayerPtr != NULL && PlayerPtr->IsSpectator));
 }
 
 

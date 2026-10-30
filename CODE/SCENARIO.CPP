@@ -2796,6 +2796,12 @@ void Assign_Houses(void)
 	**	overrides from SPAWN.INI now that every house exists.
 	*/
 	Spawner_Apply_House_Overrides();
+
+	if (Session.Play) {
+		Session.ObiWan = 1;
+		Debug_Unshroud = true;
+		Map.Flag_To_Redraw(true);
+	}
 }
 
 

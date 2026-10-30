@@ -201,7 +201,7 @@ static void Queue_Playback(void);
 //...........................................................................
 // Debugging:
 //...........................................................................
-static void Compute_Game_CRC(void);
+void Compute_Game_CRC(void);
 void Add_CRC(unsigned long *crc, unsigned long val);
 static void Print_CRCs(EventClass *ev);
 static void Init_Queue_Mono(ConnManClass *net);
@@ -3851,7 +3851,7 @@ static void Queue_Playback(void)
  * HISTORY:                                                                *
  *   05/09/1995 BRR : Created.                                             *
  *=========================================================================*/
-static void Compute_Game_CRC(void)
+void Compute_Game_CRC(void)
 {
 	int i,j;
 	VesselClass *vessp;

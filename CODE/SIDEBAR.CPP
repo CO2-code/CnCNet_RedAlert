@@ -754,7 +754,9 @@ void SidebarClass::Draw_It(bool complete)
 
 	BStart(BENCH_SIDEBAR);
 
-	if (IsSidebarActive && (IsToRedraw || complete) && !Debug_Map) {
+	bool redraw = IsToRedraw || complete;
+
+	if (IsSidebarActive && redraw && !Debug_Map) {
 		IsToRedraw = false;
 
 		if (LogicPage->Lock()) {
@@ -781,8 +783,10 @@ void SidebarClass::Draw_It(bool complete)
 	**	Draw the side strip elements by calling their respective draw functions.
 	*/
 	if (IsSidebarActive) {
-		Column[0].Draw_It(complete);
-		Column[1].Draw_It(complete);
+		if (!Player_Is_Spectator()) {
+			Column[0].Draw_It(complete);
+			Column[1].Draw_It(complete);
+		}
 
 		if (complete || IsToRedraw) {
 			Repair.Draw_Me(true);
@@ -794,7 +798,7 @@ void SidebarClass::Draw_It(bool complete)
 	**	An observer (CnCNet Spawner) has no production to look at, so the sidebar is used to
 	**	show the live statistics of every player instead.
 	*/
-	if (IsSidebarActive && (complete || IsToRedraw) && Player_Is_Spectator()) {
+	if (IsSidebarActive && redraw && Player_Is_Spectator()) {
 		Draw_Live_Stats();
 	}
 
@@ -952,7 +956,7 @@ void SidebarClass::AI(KeyNumType & input, int x, int y)
 		Activate(1);	// Force the sidebar always on in Win95 mode
 	}
 #endif	//WIN32
-	if (!Debug_Map) {
+	if (!Debug_Map && !Player_Is_Spectator()) {
 		Column[0].AI(input, x, y);
 		Column[1].AI(input, x, y);
 	}
