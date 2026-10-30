@@ -255,7 +255,7 @@ int LoadReplayClass::Process(void)
 			{
 				int game_idx = listbtn.Current_Index();
 				if (game_idx >= 0 && game_idx < FileCount && Files[game_idx]->Valid) {
-					Session.RecordFile.Set_Name(Files[game_idx]->Descr);
+					Session.RecordFile.Set_Name(Files[game_idx]->FilePath);
 					Session.Play = true;
 					Session.Record = false;
 					process = false;
@@ -339,54 +339,45 @@ void LoadReplayClass::Clear_List(ListClass * list)
  *=============================================================================================*/
 void LoadReplayClass::Fill_List(ListClass * list)
 {
-	ReplayFileEntryClass * fdata;		// for adding entries to 'Files'
-	struct find_t ff;					// for _dos_findfirst
+	ReplayFileEntryClass * fdata;
+	struct find_t ff;
+	const char * replay_dirs[2] = {"", "replays\\"};
+	char search[128];
 	int id = 0;
 
-	/*
-	**	Make sure the list is empty
-	*/
 	Clear_List(list);
 
-	/*
-	**	Find all replay files.
-	*/
-	int rc = _dos_findfirst("*.REPLAY*", _A_NORMAL, &ff);
+	for (int dir = 0; dir < 2 && FileCount < MAX_REPLAY_FILES; dir++) {
+		search[0] = '\0';
+		strncat(search, replay_dirs[dir], sizeof(search) - 1);
+		strncat(search, "*.REPLAY*", sizeof(search) - strlen(search) - 1);
+		int rc = _dos_findfirst(search, _A_NORMAL, &ff);
 
-	while (!rc && FileCount < MAX_REPLAY_FILES) {
-
-		fdata = new ReplayFileEntryClass;
-
-		fdata->Descr[0] = '\0';
-		strncat(fdata->Descr, ff.name, (sizeof(fdata->Descr) - strlen(fdata->Descr)) - 1);
-		fdata->Valid = true;
-		fdata->Scenario = 0;
-		fdata->House = (HousesType)0;
-		fdata->Num = id++;
-		fdata->DateTime = (((unsigned long)ff.wr_date) << 16) | (unsigned long)ff.wr_time;
-		Files[FileCount++] = fdata;
-
-		/*
-		**	Find the next file
-		*/
-		rc = _dos_findnext(&ff);
+		while (!rc && FileCount < MAX_REPLAY_FILES) {
+			fdata = new ReplayFileEntryClass;
+			fdata->Descr[0] = '\0';
+			strncat(fdata->Descr, ff.name, sizeof(fdata->Descr) - 1);
+			fdata->FilePath[0] = '\0';
+			strncat(fdata->FilePath, replay_dirs[dir], sizeof(fdata->FilePath) - 1);
+			strncat(fdata->FilePath, ff.name, sizeof(fdata->FilePath) - strlen(fdata->FilePath) - 1);
+			fdata->Valid = true;
+			fdata->Scenario = 0;
+			fdata->House = (HousesType)0;
+			fdata->Num = id++;
+			fdata->DateTime = (((unsigned long)ff.wr_date) << 16) | (unsigned long)ff.wr_time;
+			Files[FileCount++] = fdata;
+			rc = _dos_findnext(&ff);
+		}
 	}
 
-	/*
-	**	Now sort the list in order of Date/Time (newest first, oldest last)
-	*/
 	if (FileCount > 1) {
 		qsort((void *)(&Files[0]), FileCount, sizeof(ReplayFileEntryClass *), LoadReplayClass::Compare);
 	}
 
-	/*
-	**	Now add every file's name to the list box
-	*/
 	for (int i = 0; i < FileCount; i++) {
 		list->Add_Item(Files[i]->Descr);
 	}
 }
-
 
 /***********************************************************************************************
  * LoadReplayClass::Compare -- for qsort                                                      *
