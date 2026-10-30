@@ -5210,6 +5210,8 @@ unsigned long Disk_Space_Available(void)
 
 
 
+static void Do_Record_Playback(void)
+{
 	int count;
 	TARGET tgt;
 	int i;
