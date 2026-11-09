@@ -2124,6 +2124,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 	/* CnCNet Spawner: record match to replay file */
 	Session.Record = spawnini.Get_Bool("Settings", "Record", Session.Record);
 	if (Session.Record) {
+		mkdir("replays");
 		char buf[1024];
 		memset(buf, 0, sizeof(buf));
 		time_t t;
@@ -2394,7 +2395,7 @@ static bool Read_Spawner_Game_Options_And_Launch_Match(void)
 		Session.Type = GAME_NORMAL;
 	}
 
-	if (Session.Type == GAME_INTERNET) {
+	if (Session.Type == GAME_INTERNET && replayFile[0] == 0) {
 		Session.CommProtocol = (CommProtocolType)spawnini.Get_Int(
 			"Settings", "NetworkVersionProtocol", 0);
 #ifdef WINSOCK_IPX

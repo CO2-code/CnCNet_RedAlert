@@ -324,6 +324,7 @@ bool Queue_Options(void)
 	*/
 	if (Session.Play) {
 		SpecialDialog = SDLG_OPTIONS;
+		return(true);
 	}
 
 	if (! OutList.Add(EventClass(EventClass::OPTIONS))) {
@@ -681,13 +682,10 @@ static void Queue_AI_Multiplayer(void)
 	//------------------------------------------------------------------------
 	//	Compute the Game's CRC
 	//------------------------------------------------------------------------
-	/*
-	**	Disabled: Compute_Game_CRC() advances the random number generator, which
-	**	desyncs replays. This per-frame CRC bookkeeping is a C&C1 netcode
-	**	leftover and is not needed by the spawner/match code.
-	*/
-	//Compute_Game_CRC();
-	//CRC[Frame & 0x001f] = GameCRC;
+	// This consumes one synchronized RNG value. Playback must call it on the
+	// same frames, including frame zero and frames between send periods.
+	Compute_Game_CRC();
+	CRC[Frame & 0x001f] = GameCRC;
 
 	//------------------------------------------------------------------------
 	//	If we've just started a game, or loaded a multiplayer game, we must
@@ -3485,11 +3483,17 @@ static int Execute_DoList(int max_houses, HousesType base_house,
 						// to the computer.
 						//
 						if (Session.Play && DoList[j].Type==EventClass::EXIT) {
-							hptr->IsHuman = false;
-							hptr->IQ = Rule.MaxIQ;
-							hptr->Computer_Paranoid();
-							strcpy (hptr->IniName,Text_String(TXT_COMPUTER));
-							Session.NumPlayers--;
+							if (Session.Type == GAME_IPX || Session.Type == GAME_INTERNET) {
+								// Match live departure, including Players removal and
+								// any spawner-specific resignation behavior.
+								Destroy_Connection(house, 0);
+							} else {
+								hptr->IsHuman = false;
+								hptr->IQ = Rule.MaxIQ;
+								hptr->Computer_Paranoid();
+								strcpy (hptr->IniName,Text_String(TXT_COMPUTER));
+								Session.NumPlayers--;
+							}
 						}
 					}
 				}
@@ -3504,7 +3508,12 @@ static int Execute_DoList(int max_houses, HousesType base_house,
 					// going out of sync, if the games were saved at different
 					// frame numbers.
 					//............................................................
-					if (!skip_crc || *skip_crc == 0) {
+					if (Session.Play) {
+						// Recorded peer CRCs belong to live transport history, including
+						// its startup grace period, not the viewer's history.
+						check_crc = 0;
+					}
+					else if (!skip_crc || *skip_crc == 0) {
 						check_crc = 1;
 					}
 					else {
@@ -3673,10 +3682,18 @@ static void Queue_Record(void)
 	//------------------------------------------------------------------------
 	//	Save the # of events, then all events.
 	//------------------------------------------------------------------------
-	Session.RecordFile.Write (&j,sizeof(j));
+	if (Session.RecordFile.Write(&j, sizeof(j)) != sizeof(j)) {
+		Session.Record = false;
+		Session.RecordFile.Close();
+		return;
+	}
 	for (i = 0; i < DoList.Count; i++) {
 		if (Frame == DoList[i].Frame && !DoList[i].IsExecuted) {
-			Session.RecordFile.Write (&DoList[i],sizeof (EventClass));
+			if (Session.RecordFile.Write(&DoList[i], sizeof(EventClass)) != sizeof(EventClass)) {
+				Session.Record = false;
+				Session.RecordFile.Close();
+				return;
+			}
 			j--;
 		}
 	}
@@ -3717,6 +3734,10 @@ static void Queue_Playback(void)
 	HousesType base_house;
 	int key;
 	int testframe;
+	bool singleplayer = Session.Type == GAME_NORMAL || Session.Type == GAME_SKIRMISH;
+
+	// Viewer commands must never accumulate or become simulation input.
+	OutList.Init();
 
 	//------------------------------------------------------------------------
 	//	If the user hits ESC, stop the playback
@@ -3744,12 +3765,12 @@ static void Queue_Playback(void)
 	//------------------------------------------------------------------------
 	//	Compute the Game's CRC
 	//------------------------------------------------------------------------
-	/*
-	**	Disabled for replay playback: Compute_Game_CRC() advances the random
-	**	number generator and desyncs playback.
-	*/
-	//Compute_Game_CRC();
-	//CRC[Frame & 0x001f] = GameCRC;
+	// Queue_AI_Normal does not compute this CRC. Match the recording's mode
+	// instead of introducing an extra RNG draw in campaign/skirmish playback.
+	if (!singleplayer) {
+		Compute_Game_CRC();
+		CRC[Frame & 0x001f] = GameCRC;
+	}
 
 	//------------------------------------------------------------------------
 	// If we've reached the CRC print frame, do so & exit
@@ -3765,17 +3786,20 @@ static void Queue_Playback(void)
 	//	routine didn't write anything the first time through); do this after the
 	//	CRC is computed, since we'll still need a CRC for Frame 0.
 	//------------------------------------------------------------------------
-	if (Frame==0 && Session.Type!=GAME_NORMAL) {
+	if (Frame == 0 && !singleplayer) {
 		return;
 	}
 
 	//------------------------------------------------------------------------
 	// Only process every 'FrameSendRate' frames
 	//------------------------------------------------------------------------
-	testframe = ((Frame + (Session.FrameSendRate - 1)) /
-		Session.FrameSendRate) * Session.FrameSendRate;
-	if ( (Session.Type != GAME_NORMAL && Session.Type != GAME_SKIRMISH) &&
-		Session.CommProtocol == COMM_PROTOCOL_MULTI_E_COMP) {
+	if (!singleplayer && Session.CommProtocol == COMM_PROTOCOL_MULTI_E_COMP) {
+		if (Session.FrameSendRate <= 0) {
+			GameActive = 0;
+			return;
+		}
+		testframe = ((Frame + (Session.FrameSendRate - 1)) /
+			Session.FrameSendRate) * Session.FrameSendRate;
 		if (Frame != testframe) {
 			return;
 		}
@@ -3787,11 +3811,24 @@ static void Queue_Playback(void)
 	ok = 1;
 	if (Session.RecordFile.Read (&numevents, sizeof(numevents)) ==
 		sizeof(numevents)) {
+		// Reject corrupt counts before reading or indexing the bounded queue.
+		if (numevents < 0 || numevents > MAX_EVENTS * 64 - DoList.Count) {
+			GameActive = 0;
+			return;
+		}
 		for (i = 0; i < numevents; i++) {
 			if (Session.RecordFile.Read (&event, sizeof(EventClass)) ==
 				sizeof(EventClass)) {
+				if (event.Type < EventClass::EMPTY || event.Type >= EventClass::LAST_EVENT ||
+					event.Frame != Frame || event.ID >= HOUSE_COUNT) {
+					ok = 0;
+					break;
+				}
 				event.IsExecuted = 0;
-				DoList.Add (event);
+				if (!DoList.Add(event)) {
+					ok = 0;
+					break;
+				}
 				#ifdef MIRROR_QUEUE
 				MirrorList.Add(event);
 				#endif
@@ -3815,7 +3852,7 @@ static void Queue_Playback(void)
 	//------------------------------------------------------------------------
 	// Execute the DoList; if an error occurs, bail out.
 	//------------------------------------------------------------------------
-	if (Session.Type == GAME_NORMAL) {
+	if (singleplayer) {
 		max_houses = 1;
 		base_house = PlayerPtr->Class->House;
 	}
